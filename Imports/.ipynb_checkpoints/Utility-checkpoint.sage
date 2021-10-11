@@ -263,10 +263,14 @@ def find_all_triplets_of_coplanar_lines(keys):
     return all_triplets    
     
 def remove_sing_factors(poly, sing):
-    fact = poly.factor()
-    factors = [el[0] for el in list(fact)]
-    mcd = [el[0] for el in list(gcd(fact, sing))]
-    return prod([el for el in factors if el not in mcd])
+    sing_fact = [el[0] for el in list(sing)]+[-el[0] for el in list(sing)]
+    poly_fact = [el[0] for el in list(poly.factor())]
+    poly_powers = [el[1] for el in list(poly.factor())]
+    product = 1
+    for fact in sing_fact:
+        if fact in poly_fact:
+            product = product*fact^poly_powers[poly_fact.index(fact)]
+    return poly//product
     
     
 def change_coord(proj):
@@ -321,18 +325,18 @@ def find_all_permutations(keys):
                             
     return all_perm
     
-    def find_conditions_for_subfamilies(cubic, sing_cubics, projectivities, simmetries):
-        mon = ((x+y+z+t)^3).monomials()
-        conditions = []
-        sing_cubics_factored = sing_cubics.factor()
-        for M in [proj for proj in projectivities if proj not in simmetries]:
-            sost = change_coord(M)
-            new_cubic = remove_sing_factors(cubic.eqn.subs(sost), sing_cubics_factored)    
-            minor = matrix([[new_cubic.coefficient(mn) for mn in mon], [cubic.eqn.coefficient(mn) for mn in mon]]).minors(2)
-            minor = [remove_sing_factors(el, sing_cubics_factored) for el in minor if el !=0]
-            prim_deco = P.ideal(minor).radical().primary_decomposition()
-            for ideale in prim_deco:
-                gener = tuple([remove_sing_factors(gen, sing_cubics_factored) for gen in ideale.gens()])
-                if 1 not in gener:
-                    conditions.append(gener)    
-        return list(set(conditions))
+def find_conditions_for_subfamilies(cubic, sing_cubics, projectivities, simmetries):
+    mon = ((x+y+z+t)^3).monomials()
+    conditions = []
+    sing_cubics_factored = sing_cubics.factor()
+    for M in [proj for proj in projectivities if proj not in simmetries]:
+        sost = change_coord(M)
+        new_cubic = remove_sing_factors(cubic.eqn.subs(sost), sing_cubics_factored)    
+        minor = matrix([[new_cubic.coefficient(mn) for mn in mon], [cubic.eqn.coefficient(mn) for mn in mon]]).minors(2)
+        minor = [remove_sing_factors(el, sing_cubics_factored) for el in minor if el !=0]
+        prim_deco = P.ideal(minor).radical().primary_decomposition()
+        for ideale in prim_deco:
+            gener = tuple([remove_sing_factors(gen, sing_cubics_factored) for gen in ideale.gens()])
+            if 1 not in gener:
+                conditions.append(gener)    
+    return list(set(conditions))
