@@ -3,6 +3,9 @@ class Cubic():
         self.eqn = eqn
         self.P = eqn.parent()
         self.lines = self.find_all_lines_on_cubic_surface(line)
+        if len(self.lines) < 27:
+            print('Cubic is singular')
+            return
         self.cl_lines = self.classify_lines_on_cubic_surface()
         self.tritangent_planes = self.find_tritangent_planes(sing_cubic)
         self.eckardt_points = [pl.find_eckardt_point() for pl in self.tritangent_planes if pl.conditions == 0]            
