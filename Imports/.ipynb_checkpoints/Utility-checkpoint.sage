@@ -329,14 +329,21 @@ def find_conditions_for_subfamilies(cubic, sing_cubics, projectivities, simmetri
     mon = ((x+y+z+t)^3).monomials()
     conditions = []
     sing_cubics_factored = sing_cubics.factor()
+    Eck = lcm([el.conditions for el in cubic.tritangent_planes if el.conditions != 0])
     for M in [proj for proj in projectivities if proj not in simmetries]:
         sost = change_coord(M)
         new_cubic = remove_sing_factors(cubic.eqn.subs(sost), sing_cubics_factored)    
         minor = matrix([[new_cubic.coefficient(mn) for mn in mon], [cubic.eqn.coefficient(mn) for mn in mon]]).minors(2)
         minor = [remove_sing_factors(el, sing_cubics_factored) for el in minor if el !=0]
-        prim_deco = P.ideal(minor).radical().primary_decomposition()
+        prim_deco = cubic.P.ideal(minor).radical().primary_decomposition()
         for ideale in prim_deco:
             gener = tuple([remove_sing_factors(gen, sing_cubics_factored) for gen in ideale.gens()])
             if 1 not in gener:
-                conditions.append(gener)    
+                flag = True
+                for cond in gener:
+                    if cond.divides(Eck):
+                        flag = False
+                        break
+                if flag is True:
+                    conditions.append(gener)                        
     return list(set(conditions))
