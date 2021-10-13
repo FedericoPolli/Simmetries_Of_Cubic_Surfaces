@@ -347,3 +347,18 @@ def find_conditions_for_subfamilies(cubic, sing_cubics, projectivities, simmetri
                 if flag is True:
                     conditions.append(gener)                        
     return list(set(conditions))
+    
+    
+    
+def remove_conditions_for_eckardt_points_and_sing(cubic, sing_cubics, conditions):
+    vrs = cubic.eqn.variables()[4:]  
+    Eck = lcm([el.conditions for el in cubic.tritangent_planes if el.conditions != 0])
+    true_cond = []
+    for cond in conditions:
+        sol = solve_linear_system(cond, vrs[0:-1], [vrs[-1]])
+        sost = {vrs[i]:sol[i] for i in range(len(vrs))}
+        if sing_cubics.subs(sost) == 0:
+            continue
+        if Eck.subs({vrs[i]:sol[i] for i in range(len(vrs))}) != 0:
+            true_cond.append(cond)
+    return true_cond
