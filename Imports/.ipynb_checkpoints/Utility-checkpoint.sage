@@ -264,8 +264,9 @@ def find_all_triplets_of_coplanar_lines(keys):
     
 def remove_sing_factors(poly, sing):
     sing_fact = [el[0] for el in list(sing)]+[-el[0] for el in list(sing)]
-    poly_fact = [el[0] for el in list(poly.factor())]
-    poly_powers = [el[1] for el in list(poly.factor())]
+    poly_f = poly.factor()
+    poly_fact = [el[0] for el in list(poly_f)]
+    poly_powers = [el[1] for el in list(poly_f)]
     product = 1
     for fact in sing_fact:
         if fact in poly_fact:
@@ -321,8 +322,7 @@ def find_all_permutations(keys):
                                         else:
                                             s.intersection_update(not_in[k])
                                     F.append(list(s)[0])
-                            all_perm.append(E+G+F)
-                            
+                            all_perm.append(E+G+F)                           
     return all_perm
     
 def find_conditions_for_subfamilies(cubic, sing_cubics, projectivities, simmetries):
