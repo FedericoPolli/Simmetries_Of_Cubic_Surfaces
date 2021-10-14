@@ -337,28 +337,15 @@ def find_conditions_for_subfamilies(cubic, sing_cubics, projectivities, simmetri
         minor = [remove_sing_factors(el, sing_cubics_factored) for el in minor if el !=0]
         prim_deco = cubic.P.ideal(minor).radical().primary_decomposition()
         for ideale in prim_deco:
-            gener = tuple([remove_sing_factors(gen, sing_cubics_factored) for gen in ideale.gens()])
-            if 1 not in gener:
-                flag = True
-                for cond in gener:
-                    if cond.divides(Eck):
-                        flag = False
-                        break
-                if flag is True:
-                    conditions.append(gener)                        
+            if is_ideal_valid(ideale, cubic, sing_cubics_factored):
+                conditions.append(ideale.gens())                        
     return list(set(conditions))
-    
-    
-    
-def remove_conditions_for_eckardt_points_and_sing(cubic, sing_cubics, conditions):
-    vrs = cubic.eqn.variables()[4:]  
-    Eck = lcm([el.conditions for el in cubic.tritangent_planes if el.conditions != 0])
-    true_cond = []
-    for cond in conditions:
-        sol = solve_linear_system(cond, vrs[0:-1], [vrs[-1]])
-        sost = {vrs[i]:sol[i] for i in range(len(vrs))}
-        if sing_cubics.subs(sost) == 0:
-            continue
-        if Eck.subs({vrs[i]:sol[i] for i in range(len(vrs))}) != 0:
-            true_cond.append(cond)
-    return true_cond
+
+
+def is_ideal_valid(ideal, cubic, sing_cubics):
+    if sing_cubics in ideal:
+        return False
+    for poly in list(set([pl.conditions for pl in cubic.tritangent_planes if pl.conditions !=0])):
+        if poly in ideal:
+            return False
+    return True    
