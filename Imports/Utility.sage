@@ -350,3 +350,9 @@ def is_ideal_valid(ideal, cubic, sing_cubics):
         if poly in ideal:
             return False
     return True    
+    
+def apply_proj_to_eck(proj, eck):
+    new_indices = []
+    for i in range(len(eck)):
+        new_indices.append(eck.index(eck[i]*proj)+1)
+    return new_indices
