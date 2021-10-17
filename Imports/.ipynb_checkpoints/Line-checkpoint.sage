@@ -1,11 +1,14 @@
 class Line():
-    def __init__(self, planes):
+    def __init__(self, planes, points = None, plucker = None):
         self.P = planes[0].parent()
         self.planes = planes
-        self.points = self.get_two_points_on_line()
-        self.plucker = Point(vector(matrix([p for p in self.points]).minors(2)))
-
-    
+        if points == None or plucker == None:
+            self.points = self.get_two_points_on_line()
+            self.plucker = Point(vector(matrix([p for p in self.points]).minors(2)))
+        else:
+            self.points = points
+            self.plucker = plucker
+            
     def __str__(self):
         return self.plucker.__str__() + ' ' + self.planes.__str__()
 
@@ -18,7 +21,15 @@ class Line():
         if isinstance(other_line, Line):
             return are_vectors_proportional(self.plucker.components, other_line.plucker.components)
         return False
-        
+             
+    def subs(self, sost):
+        planes = [self.P(pl.subs(sost).numerator()) for pl in self.planes]
+        points = [pl.subs(sost) for pl in self.points]
+        if points[0] == points[1]:
+            return Line(planes)
+        plucker = vector([pl.subs(sost) for pl in self.plucker])
+        plucker = Point([self.P(el) for el in plucker*plucker.denominator()])
+        return Line(planes, points, plucker)
    
     def get_two_points_on_line(self):
         vr = self.P.gens()

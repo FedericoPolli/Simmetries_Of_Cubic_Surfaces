@@ -8,7 +8,11 @@ class Point():
             self.components = -temp
         else:
             self.components = temp
-
+    
+    def subs(self, sost):
+        components = vector([comp.subs(sost)for comp in self.components])
+        return Point([self.P(el) for el in components*components.denominator()])
+    
     def __str__(self):
         return self.components.__str__()
         

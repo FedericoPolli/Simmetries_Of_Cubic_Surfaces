@@ -107,10 +107,23 @@ def get_five_points_in_general_position(L_set):
     P = [a.dot_product(d)]+list(a.cross_product(m) - plane_coeff[0]*d) 
     
     plane_l3_l4 = get_plane_containing_two_incident_lines(L_set[2], L_set[3])
+    if plane_l3_l4 is None:
+        print(L_set)
     line_P_D = Line([plane_l2_l5, plane_l3_l4])
     Q = line_P_D.intersection_point(L_set[4])
     return A,B,C,E,Q
-
+    
+def get_plane_containing_two_incident_lines(line1, line2):
+    P1, P2 = line1.points
+    PL2 = line2.points
+    vrs = line1.P.gens()[0:4]
+    for point in PL2:
+        #check if point is on line1
+        if matrix([P1, P2, point]).rank() > 2:
+            #take determinant of 4x4 matrix to get equation
+            plane_factored = matrix([P1, P2, point, vrs]).det().factor()
+            return [fct[0] for fct in plane_factored if [v in fct[0].variables() for v in vrs] != [False for i in range(4)]][0]
+                        
 
 def solve_linear_system2(eqns, variables, param):
     A = matrix([[eqn.coefficient(var) for var in variables] for eqn in eqns])
@@ -218,18 +231,6 @@ def solve_linear_system(eqns, variables, param):
     sol = A.adjugate()*b
     return [sol[i,0] for i in range(len(variables))] + [det(A)*par for par in param]
 
-    
-def get_plane_containing_two_incident_lines(line1, line2):
-    P1, P2 = line1.points
-    PL2 = line2.points
-    vrs = line1.P.gens()[0:4]
-    for point in PL2:
-        #check if point is on line1
-        if matrix([P1, P2, point]).rank() > 2:
-            #take determinant of 4x4 matrix to get equation
-            plane_factored = matrix([P1, P2, point, vrs]).det().factor()
-            return [fct[0] for fct in plane_factored if [v in fct[0].variables() for v in vrs] != [False for i in range(4)]][0]
-                        
             
 def find_all_tritangent_planes(cl_lines):
     keys = cl_lines.keys()
@@ -325,10 +326,10 @@ def find_all_permutations(keys):
                             all_perm.append(E+G+F)                           
     return all_perm
     
-def find_conditions_for_subfamilies(cubic, sing_cubics, projectivities, simmetries):
+def find_conditions_for_subfamilies(cubic, projectivities, simmetries):
     mon = ((x+y+z+t)^3).monomials()
     conditions = []
-    sing_cubics_factored = sing_cubics.factor()
+    sing_cubics_factored = cubic.sing_cubic.factor()
     Eck = lcm([el.conditions for el in cubic.tritangent_planes if el.conditions != 0])
     for M in [proj for proj in projectivities if proj not in simmetries]:
         sost = change_coord(M)

@@ -1,13 +1,16 @@
 class Cubic():
-    def __init__(self, eqn, line, sing_cubic):
+    def __init__(self, eqn, line, sing_cubic, lines = None, cl_lines = None, tritangent_planes = None):
         self.eqn = eqn
         self.P = eqn.parent()
-        self.lines = self.find_all_lines_on_cubic_surface(line)
-        if len(self.lines) < 27:
-            print('Cubic is singular')
-            return
-        self.cl_lines = self.classify_lines_on_cubic_surface()
-        self.tritangent_planes = self.find_tritangent_planes(sing_cubic)
+        self.sing_cubic = sing_cubic
+        if lines is None or cl_lines is None or tritangent_planes is None:
+            self.lines = self.find_all_lines_on_cubic_surface(line)
+            self.cl_lines = self.classify_lines_on_cubic_surface()
+            self.tritangent_planes = self.find_tritangent_planes(self.sing_cubic.factor())
+        else:
+            self.lines = lines
+            self.cl_lines = cl_lines
+            self.tritangent_planes = tritangent_planes
         self.eckardt_points = [pl.find_eckardt_point() for pl in self.tritangent_planes if pl.conditions == 0]            
         
     def __str__(self):
@@ -18,6 +21,17 @@ class Cubic():
         
     def __repr_html__(self):
         return self.eqn.__repr_html__()
+
+    def subs(self, sost):
+        sing_cubic = self.P(self.sing_cubic.subs(sost).numerator())
+        eqn = remove_sing_factors(self.P(self.eqn.subs(sost).numerator()), sing_cubic.factor())
+        lines = [line.subs(sost) for line in self.lines]
+        cl_lines = {key:value.subs(sost) for key, value in self.cl_lines.items()}
+        tritangent_planes = [pl.subs(sost) for pl in self.tritangent_planes]
+        return Cubic(eqn, None, sing_cubic, lines, cl_lines, tritangent_planes)
+
+    def factor(self):
+        return self.eqn.factor()
     
     def find_all_lines_on_cubic_surface(self, line):
         all_lines = [line]
@@ -100,6 +114,9 @@ class Cubic():
     def classify_lines_on_cubic_surface(self):
         E = self._find_E()
         G = self._find_G(E, [line for line in self.lines if line not in E])
+        if (e^2).divides(G[-1].plucker[-1]):
+            E[-2], E[-1] = E[-1], E[-2]
+            G[-2], G[-1] = G[-1], G[-2]
         F = self._find_F(E, [line for line in self.lines if line not in E and line not in G])
         lines_dict = dict(E1=E[0], E2=E[1], E3=E[2], E4=E[3], E5=E[4], E6=E[5],
                       G1=G[0], G2=G[1], G3=G[2], G4=G[3], G5=G[4], G6=G[5],
@@ -122,6 +139,9 @@ class Cubic():
                 E4 = line
                 break
         E = self._get_other_skew_lines([E1, E2, E3, E4])
+        #testing
+        if f.divides(E[-1].plucker[-1]):
+            E[-2], E[-1] = E[-1], E[-2]
         return E
 
     def _get_other_skew_lines(self, skew_lines):
@@ -181,29 +201,30 @@ class Cubic():
         return simm
         
     def find_admissible_projectivities(self):
-        _, L_sets = self.find_admissible_permutations()   
-        return find_all_proj_parallel(self.cl_lines, L_sets) 
+        adm_perm = self.find_admissible_permutations() 
+        resulting_L_sets = []
+        for perm in adm_perm:
+            perm_L_set = [perm[list(self.cl_lines.keys()).index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3']]
+            if perm_L_set not in resulting_L_sets:
+                resulting_L_sets.append(perm_L_set)
+        return find_all_proj_parallel(self.cl_lines, resulting_L_sets) 
 
 
     def find_admissible_permutations(self):
         with open('all_permutations.pickle', 'rb') as ff:
             all_permutations = pickle.load(ff) 
         adm_perm = []
-        resulting_L_sets = []
+        keys = list(self.cl_lines.keys())
         labels = [sorted(el.labels) for el in self.tritangent_planes if el.conditions == 0]
         for perm in all_permutations:
             flag = True
             for triple in labels:
                 new_triple = []
                 for label in triple:
-                    new_triple.append(perm[list(self.cl_lines.keys()).index(label)])
+                    new_triple.append(perm[keys.index(label)])
                 if sorted(new_triple) not in labels:
                     flag = False
                     break
             if flag is True:
-                perm_L_set = [perm[list(self.cl_lines.keys()).index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3']]
-                if perm_L_set not in resulting_L_sets:
-                    resulting_L_sets.append(perm_L_set)
-                    adm_perm.append(perm)
-        return adm_perm, resulting_L_sets 
-        
+                adm_perm.append(perm)
+        return adm_perm    
