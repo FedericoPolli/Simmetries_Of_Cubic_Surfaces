@@ -27,6 +27,8 @@ class Cubic():
         eqn = remove_sing_factors(self.P(self.eqn.subs(sost).numerator()), sing_cubic.factor())
         lines = [line.subs(sost) for line in self.lines]
         cl_lines = {key:value.subs(sost) for key, value in self.cl_lines.items()}
+        for pl in self.tritangent_planes:
+            pl.set_sing_cubic(sing_cubic.factor())
         tritangent_planes = [pl.subs(sost) for pl in self.tritangent_planes]
         return Cubic(eqn, None, sing_cubic, lines, cl_lines, tritangent_planes)
 
