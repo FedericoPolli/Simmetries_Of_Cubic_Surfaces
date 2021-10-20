@@ -356,3 +356,24 @@ def apply_proj_to_eck(proj, eck):
     for i in range(len(eck)):
         new_indices.append(eck.index(eck[i]*proj)+1)
     return new_indices
+    
+def get_dual_coordinates(pl):
+    d = list(pl[0:3])
+    m = [pl[5], -pl[4], pl[3]]
+    return m+d
+        
+def get_planes(pl):
+    #p01, p02, p03, p23, p31, p12
+    dpl = get_dual_coordinates(pl)
+    vrs = vector([x,y,z,t])
+    eqns = [vector([0, -dpl[0], -dpl[1], -dpl[2]]), 
+            vector([dpl[0], 0, dpl[5], -dpl[4]]), 
+            vector([dpl[1], dpl[5], 0, -dpl[3]]), 
+            vector([dpl[2], -dpl[4], dpl[3], 0])]
+    planes = [eqn.dot_product(vrs) for eqn in eqns if eqn.dot_product(vrs)!=0]
+    for plane in planes[1:]:
+        coeff1 = vector(plane_coefficients(planes[0]))
+        coeff2 = vector(plane_coefficients(plane))
+        if not are_vectors_proportional(coeff1, coeff2):
+            return [planes[0], plane]
+    return None
