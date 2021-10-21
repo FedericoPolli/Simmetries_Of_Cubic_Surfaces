@@ -11,7 +11,8 @@ class Cubic():
             self.lines = lines
             self.cl_lines = cl_lines
             self.tritangent_planes = tritangent_planes
-        self.eckardt_points = [pl.find_eckardt_point() for pl in self.tritangent_planes if pl.conditions == 0]            
+        self.eckardt_points = [pl.find_eckardt_point() for pl in self.tritangent_planes if pl.conditions == 0] 
+        self.eckardt_points_labels = [pl.labels for pl in self.tritangent_planes if pl.conditions == 0]
         
     def __str__(self):
         return self.eqn.__str__()
@@ -116,9 +117,6 @@ class Cubic():
     def classify_lines_on_cubic_surface(self):
         E = self._find_E()
         G = self._find_G(E, [line for line in self.lines if line not in E])
-        if (e^2).divides(G[-1].plucker[-1]):
-            E[-2], E[-1] = E[-1], E[-2]
-            G[-2], G[-1] = G[-1], G[-2]
         F = self._find_F(E, [line for line in self.lines if line not in E and line not in G])
         lines_dict = dict(E1=E[0], E2=E[1], E3=E[2], E4=E[3], E5=E[4], E6=E[5],
                       G1=G[0], G2=G[1], G3=G[2], G4=G[3], G5=G[4], G6=G[5],
