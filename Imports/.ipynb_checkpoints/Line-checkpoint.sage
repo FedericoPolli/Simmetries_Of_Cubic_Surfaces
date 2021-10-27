@@ -23,12 +23,14 @@ class Line():
         return False
              
     def subs(self, sost):
+        plucker = vector([pl.subs(sost) for pl in self.plucker])
+        plucker = Point([self.P(el) for el in plucker*plucker.denominator()])
         planes = [self.P(pl.subs(sost).numerator()) for pl in self.planes]
+        if matrix([plane_coefficients(plane) for plane in planes]).minors(2) == [0 for i in range(6)]:
+            planes = get_planes(plucker)
         points = [pl.subs(sost) for pl in self.points]
         if points[0] == points[1]:
             return Line(planes)
-        plucker = vector([pl.subs(sost) for pl in self.plucker])
-        plucker = Point([self.P(el) for el in plucker*plucker.denominator()])
         return Line(planes, points, plucker)
    
     def get_two_points_on_line(self):

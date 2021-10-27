@@ -330,7 +330,6 @@ def find_conditions_for_subfamilies(cubic, projectivities, simmetries):
     mon = ((x+y+z+t)^3).monomials()
     conditions = []
     sing_cubics_factored = cubic.sing_cubic.factor()
-    Eck = lcm([el.conditions for el in cubic.tritangent_planes if el.conditions != 0])
     for M in [proj for proj in projectivities if proj not in simmetries]:
         sost = change_coord(M)
         new_cubic = remove_sing_factors(cubic.eqn.subs(sost), sing_cubics_factored)    

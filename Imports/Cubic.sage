@@ -24,7 +24,8 @@ class Cubic():
         return self.eqn.__repr_html__()
 
     def subs(self, sost):
-        sing_cubic = self.P(self.sing_cubic.subs(sost).numerator())
+        sing_subs = self.sing_cubic.subs(sost)
+        sing_cubic = self.P(sing_subs*(sing_subs.denominator())^2)
         eqn = remove_sing_factors(self.P(self.eqn.subs(sost).numerator()), sing_cubic.factor())
         lines = [line.subs(sost) for line in self.lines]
         cl_lines = {key:value.subs(sost) for key, value in self.cl_lines.items()}
@@ -186,7 +187,9 @@ class Cubic():
             planes.append(tritangent_plane(plane, lines_dict, sing_cubic))
         return planes
         
-    def find_simmetries(self, projectivities):
+    def find_simmetries(self, projectivities=None):
+        if projectivities is None:
+            projectivities = self.find_admissible_projectivities()
         return find_simmetries_parallel(self.eqn, projectivities)
 
     def find_simmetries_np(self, projectivities):
@@ -200,8 +203,9 @@ class Cubic():
                 simm.append(proj)
         return simm
         
-    def find_admissible_projectivities(self):
-        adm_perm = self.find_admissible_permutations() 
+    def find_admissible_projectivities(self, adm_perm = None):
+        if adm_perm is None:
+            adm_perm = self.find_admissible_permutations() 
         resulting_L_sets = []
         for perm in adm_perm:
             perm_L_set = [perm[list(self.cl_lines.keys()).index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3']]
