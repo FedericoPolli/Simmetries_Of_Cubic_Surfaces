@@ -376,3 +376,14 @@ def get_planes(pl):
         if not are_vectors_proportional(coeff1, coeff2):
             return [planes[0], plane]
     return None
+    
+    
+def apply_proj_to_lines(proj, lines):
+    new_indices = []
+    for i in range(len(lines)):
+        new_indices.append(lines.index(lines[i].apply_proj(proj))+1)
+    return new_indices
+    
+def from_perm_to_labels(perm):
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    return [keys[perm.dict()[key]-1] for key in perm.dict()]
