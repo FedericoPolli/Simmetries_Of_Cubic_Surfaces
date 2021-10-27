@@ -233,8 +233,7 @@ def solve_linear_system(eqns, variables, param):
 
             
 def find_all_tritangent_planes(cl_lines):
-    keys = cl_lines.keys()
-    all_triplets = find_all_triplets_of_coplanar_lines(keys)
+    all_triplets = find_all_triplets_of_coplanar_lines()
     planes = []
     for triplet in all_triplets:
         line1 = cl_lines.get(triplet[0])
@@ -245,7 +244,7 @@ def find_all_tritangent_planes(cl_lines):
     return planes
 
 
-def find_all_triplets_of_coplanar_lines(keys):
+def find_all_triplets_of_coplanar_lines():
     all_triplets = []
     for i in range(1,7):
         for j in range(1,7):
