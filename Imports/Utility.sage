@@ -83,6 +83,7 @@ def get_incident_keys(key):
                            if len(set([i + 1, j + 1, index1, index2])) == 4]
     return incident_keys
         
+#TOFIX            
 # A = l1 ∩ l2, B = l1 ∩ l4, C = l3 ∩ l4, D = l2 ∩ l3, E = l2 ∩ l5
 # P := l4 ∩ <l2 + l5>, Q := <P + D> ∩ l5.
 def get_five_points_in_general_position(L_set):
@@ -105,6 +106,7 @@ def get_five_points_in_general_position(L_set):
     Q = line_P_D.intersection_point(L_set[4])
     return A,B,C,E,Q
     
+#TOFIX            
 def get_plane_containing_two_incident_lines(line1, line2):
     P1, P2 = line1.points
     PL2 = line2.points
@@ -123,6 +125,7 @@ def solve_linear_system_in_fraction_field(eqns, variables, param):
     return A.solve_right(b)
 
 
+#TOFIX            
 def find_projectivity(base_five_points, L_set2):
     P = L_set2[0].P
     S = PolynomialRing(P.base_ring(), 21, 'v')
@@ -172,14 +175,14 @@ def are_matrices_equal(m1, m2):
     vec2 = vector(m2.list())
     return are_vectors_proportional(vec1, vec2)
     
-    
+#solve a linear system by computing the adjugate matrix   
 def solve_linear_system(eqns, variables, param):
     A = matrix([[eqn.coefficient(var) for var in variables] for eqn in eqns])
     b = matrix([sum([-eqn.coefficient(par)*par for par in param]) for eqn in eqns]).T
     sol = A.adjugate()*b
     return [sol[i,0] for i in range(len(variables))] + [det(A)*par for par in param]
 
-            
+#TOFIX            
 def find_all_tritangent_planes(cl_lines):
     all_triplets = find_all_triplets_of_coplanar_lines()
     planes = []
@@ -210,15 +213,15 @@ def find_all_triplets_of_coplanar_lines():
                                 all_triplets.append(['F'+str(1)+str(j), 'F'+str(k)+str(l), 'F'+str(m)+str(n)])
     return all_triplets    
     
-def remove_sing_factors(poly, sing):
-    sing_fact = [el[0] for el in list(sing)]+[-el[0] for el in list(sing)]
-    poly_f = poly.factor()
-    poly_fact = [el[0] for el in list(poly_f)]
-    poly_powers = [el[1] for el in list(poly_f)]
+def remove_sing_factors(poly, sing_locus):
+    sing_locus_factors = [el[0] for el in list(sing_locus)]+[-el[0] for el in list(sing_locus)]
+    poly_factorization = poly.factor()
+    poly_factors = [el[0] for el in list(poly_factorization)]
+    poly_powers = [el[1] for el in list(poly_factorization)]
     product = 1
-    for fact in sing_fact:
-        if fact in poly_fact:
-            product = product*fact^poly_powers[poly_fact.index(fact)]
+    for fact in sing_locus_factors:
+        if fact in poly_factors:
+            product = product*fact^poly_powers[poly_factors.index(fact)]
     return poly//product
     
     
@@ -227,7 +230,7 @@ def change_coord(proj):
     change_coord = vector(vrs)*proj
     return {vrs[i] : change_coord[i] for i in range(4)}
     
-    
+#Tofix    
 def find_all_permutations(keys):
     all_perm = []
     for key1 in keys:
