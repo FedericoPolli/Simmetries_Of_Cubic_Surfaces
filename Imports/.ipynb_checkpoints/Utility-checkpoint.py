@@ -177,12 +177,10 @@ def find_all_proj_parallel(cl_lines, all_L_sets):
 def find_simmetry(cubic, proj):
     P = cubic.parent()
     vrs = vector(P.gens()[0:4])
-    mon = ((x+y+z+t)^3).monomials()
     change_coord = vector(vrs)*proj 
     sost = {vrs[i] : change_coord[i] for i in range(4)}
     new_cubic = cubic.subs(sost)
-    coeffs = matrix([[cubic.coefficient(mn) for mn in mon], [new_cubic.coefficient(mn) for mn in mon]]).minors(2)
-    if coeffs == [0 for i in range(len(coeffs))]:
+    if cubic.coefficient(vrs[0]^2*vrs[1])*new_cubic - new_cubic.coefficient(vrs[0]^2*vrs[1])*cubic == 0:
         return proj
     else:
         return None
@@ -330,14 +328,15 @@ def find_all_permutations(keys):
 def find_conditions_for_subfamilies(cubic, projectivities, simmetries):
     mon = ((x+y+z+t)^3).monomials()
     conditions = []
+    sing_cubics_factored = cubic.sing_cubic.factor()
     for M in [proj for proj in projectivities if proj not in simmetries]:
         sost = change_coord(M)
-        new_cubic = remove_sing_factors(cubic.eqn.subs(sost), cubic.sing_cubic)    
-        minor = list(set(matrix([[new_cubic.coefficient(mn) for mn in mon], [cubic.eqn.coefficient(mn) for mn in mon]]).minors(2)))
-        minor = [remove_sing_factors(el, cubic.sing_cubic) for el in minor if el !=0]
+        new_cubic = remove_sing_factors(cubic.eqn.subs(sost), sing_cubics_factored)    
+        minor = matrix([[new_cubic.coefficient(mn) for mn in mon], [cubic.eqn.coefficient(mn) for mn in mon]]).minors(2)
+        minor = [remove_sing_factors(el, sing_cubics_factored) for el in minor if el !=0]
         prim_deco = cubic.P.ideal(minor).radical().primary_decomposition()
         for ideale in prim_deco:
-            if is_ideal_valid(ideale, cubic, cubic.sing_cubic):
+            if is_ideal_valid(ideale, cubic, sing_cubics_factored):
                 conditions.append(ideale.gens())                        
     return list(set(conditions))
 
