@@ -151,55 +151,6 @@ def find_projectivity(base_five_points, L_set2):
     proj = proj/gcd(gcd(proj.coefficients()[i].coefficients()) for i in range(len(proj.coefficients())))
     return proj*proj.denominator()
     
-def find_all_projectivities(classified_lines, L_set, base_five_points):
-    L2 = get_L_set_in_plucker(classified_lines, L_set)
-    M = find_projectivity(base_five_points, L2)
-    return M  
-
-def find_proj_parallel(args):
-    return find_all_projectivities(*args)
-
-def find_all_proj_parallel(cl_lines, all_L_sets):
-    if os.name == "nt":
-        freeze_support()
-    pool = mp.Pool(mp.cpu_count()-1)
-    L_set_base = get_L_set_in_plucker(cl_lines, ['E1', 'G4', 'E2', 'G3', 'E3'])
-    base_five_points = get_five_points_in_general_position(L_set_base)
-    all_param = ((cl_lines, L_set, base_five_points) for L_set in all_L_sets)
-    result = pool.map(find_proj_parallel, all_param) 
-    pool.close()
-    return result
-
-
-#Cubics-----------------------------------------------------------------------------------------------------
-
-
-def find_simmetry(cubic, proj):
-    P = cubic.parent()
-    vrs = vector(P.gens()[0:4])
-    mon = ((x+y+z+t)^3).monomials()
-    change_coord = vector(vrs)*proj 
-    sost = {vrs[i] : change_coord[i] for i in range(4)}
-    new_cubic = cubic.subs(sost)
-    coeffs = matrix([[cubic.coefficient(mn) for mn in mon], [new_cubic.coefficient(mn) for mn in mon]]).minors(2)
-    if coeffs == [0 for i in range(len(coeffs))]:
-        return proj
-    else:
-        return None
-
-def find_simmetries_wrapper(args):
-    return find_simmetry(*args)
-
-def find_simmetries_parallel(cubic, all_projectivities):
-    if os.name == "nt":
-        freeze_support()
-    pool = mp.Pool(mp.cpu_count()-1)
-    all_param = ((cubic, proj) for proj in all_projectivities)
-    result = [el for el in pool.map(find_simmetries_wrapper, all_param) if el is not None]
-    pool.close()
-    return result
-    
-    
 # Utility -----------------------------------------------------------------------------
 
         
