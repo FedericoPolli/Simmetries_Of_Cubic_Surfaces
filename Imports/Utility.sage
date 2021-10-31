@@ -1,8 +1,6 @@
 def find_conic_discriminant(conic):
-    # do not consider l, m as variables for the conic
-    P = conic.parent()
-    v = [variable for variable in conic.variables() if variable in P.gens()[0:4]]
-    conic_discriminant = matrix([
+    v = [variable for variable in conic.variables() if variable in conic.parent().gens()[0:4]]
+    discriminant_matrix = matrix([
         [conic.coefficient(v[0] ^ 2),
          (1 / 2) * conic.coefficient(v[0]).coefficient(v[1]),
          (1 / 2) * conic.coefficient(v[0]).coefficient(v[2])],
@@ -13,81 +11,77 @@ def find_conic_discriminant(conic):
          (1 / 2) * conic.coefficient(v[2]).coefficient(v[1]),
          conic.coefficient(v[2] ^ 2)]
     ])
-    return conic_discriminant.det().factor()
-
-# L-sets ------------------------------------------------------------------------------------------
+    return discriminant_matrix.det().factor()
 
 
-def find_all_L_sets(lines_dict):
-    five_tuples = []
-    keys = lines_dict.keys()
+def find_all_L_sets():
+    all_L_sets = []
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     for key1 in keys:
-        for key2 in get_incident_keys(key1):
-            for key3 in set(get_non_incident_keys(key1)).intersection(get_incident_keys(key2)):
-                for key4 in set(get_incident_keys(key1)).intersection(
-                    get_non_incident_keys(key2)).intersection(
-                    get_incident_keys(key3)):
-                    
-                    for key5 in set(get_non_incident_keys(key1)).intersection(
-                        get_incident_keys(key2)).intersection(
-                        get_non_incident_keys(key3)).intersection(
-                        get_non_incident_keys(key4)):
-                        
-                        five_tuples.append([key1, key2, key3, key4, key5])
-    return five_tuples
+        incident_1 = set(get_incident_keys(key1))
+        non_incident_1 = set(get_non_incident_keys(key1))
+        for key2 in incident_1:
+            incident_2 = set(get_incident_keys(key2))
+            non_incident_2 = set(get_non_incident_keys(key2))
+            for key3 in non_incident_1.intersection(incident_2):
+                incident_3 = set(get_incident_keys(key3))
+                non_incident_3 = set(get_non_incident_keys(key3))
+                for key4 in incident_1.intersection(non_incident_2).intersection(incident_3):   
+                    non_incident_4 = set(get_non_incident_keys(key4))
+                    for key5 in non_incident_1.intersection(incident_2).intersection(non_incident_3).intersection(non_incident_4):                       
+                        all_L_sets.append((key1, key2, key3, key4, key5))
+    return all_L_sets
 
-
+#E_i does not meet G_j if i=j
+#E_i, G_i do not meet F_jk if i!=j and i!=k
+#F_ij does not meet F_kl if i,j,k,l are not all different
 def get_non_incident_keys(key):
-    not_incident_lines = []
+    non_incident_keys = []
     if key[0] == 'E':
         index = int(key[1])
-        not_incident_lines += ['E' + str(i + 1) for i in range(6) if i + 1 != index]
-        not_incident_lines.append('G' + str(index))
-        not_incident_lines += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
+        non_incident_keys += ['E' + str(i + 1) for i in range(6) if i + 1 != index]
+        non_incident_keys.append('G' + str(index))
+        non_incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
                                if i + 1 != index and j + 1 != index]
     elif key[0] == 'G':
         index = int(key[1])
-        not_incident_lines += ['G' + str(i + 1) for i in range(6) if i + 1 != index]
-        not_incident_lines.append('E' + str(index))
-        not_incident_lines += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
+        non_incident_keys += ['G' + str(i + 1) for i in range(6) if i + 1 != index]
+        non_incident_keys.append('E' + str(index))
+        non_incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
                                if i + 1 != index and j + 1 != index]
     else:
         index1 = int(key[1])
         index2 = int(key[2])
-        not_incident_lines += ['E' + str(i + 1) for i in range(6) if i + 1 != index1 and i + 1 != index2]
-        not_incident_lines += ['G' + str(i + 1) for i in range(6) if i + 1 != index1 and i + 1 != index2]
-        not_incident_lines += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
+        non_incident_keys += ['E' + str(i + 1) for i in range(6) if i + 1 != index1 and i + 1 != index2]
+        non_incident_keys += ['G' + str(i + 1) for i in range(6) if i + 1 != index1 and i + 1 != index2]
+        non_incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
                                if len(set([i + 1, j + 1, index1, index2])) < 4]
-        not_incident_lines.remove('F' + str(index1) + str(index2))
-    return not_incident_lines
+        non_incident_keys.remove('F' + str(index1) + str(index2))
+    return non_incident_keys
 
-
+#E_i meets G_j if i!=j
+#E_i, G_i meets F_jk if i=j or i=k
+#F_ij meets F_kl if i,j,k,l are all different
 def get_incident_keys(key):
-    incident_lines = []
+    incident_keys = []
     if key[0] == 'E':
         index = int(key[1])
-        incident_lines += ['G' + str(i + 1) for i in range(6) if i + 1 != index]
-        incident_lines += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
+        incident_keys += ['G' + str(i + 1) for i in range(6) if i + 1 != index]
+        incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
                            if i + 1 == index or j + 1 == index]
     elif key[0] == 'G':
         index = int(key[1])
-        incident_lines += ['E' + str(i + 1) for i in range(6) if i + 1 != index]
-        incident_lines += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
+        incident_keys += ['E' + str(i + 1) for i in range(6) if i + 1 != index]
+        incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
                            if i + 1 == index or j + 1 == index]
     else:
         index1 = int(key[1])
         index2 = int(key[2])
-        incident_lines += ['E' + str(i + 1) for i in range(6) if i + 1 == index1 or i + 1 == index2]
-        incident_lines += ['G' + str(i + 1) for i in range(6) if i + 1 == index1 or i + 1 == index2]
-        incident_lines += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
+        incident_keys += ['E' + str(i + 1) for i in range(6) if i + 1 == index1 or i + 1 == index2]
+        incident_keys += ['G' + str(i + 1) for i in range(6) if i + 1 == index1 or i + 1 == index2]
+        incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
                            if len(set([i + 1, j + 1, index1, index2])) == 4]
-    return incident_lines
-
-
-#from the classification as E, F, G returns the actual lines in plucker coordinates
-def get_L_set_in_plucker(classified_lines, L_set):
-    return tuple(map(lambda uu: classified_lines[uu], L_set))
-
+    return incident_keys
         
 # A = l1 ∩ l2, B = l1 ∩ l4, C = l3 ∩ l4, D = l2 ∩ l3, E = l2 ∩ l5
 # P := l4 ∩ <l2 + l5>, Q := <P + D> ∩ l5.
@@ -107,8 +101,6 @@ def get_five_points_in_general_position(L_set):
     P = [a.dot_product(d)]+list(a.cross_product(m) - plane_coeff[0]*d) 
     
     plane_l3_l4 = get_plane_containing_two_incident_lines(L_set[2], L_set[3])
-    if plane_l3_l4 is None:
-        print(L_set)
     line_P_D = Line([plane_l2_l5, plane_l3_l4])
     Q = line_P_D.intersection_point(L_set[4])
     return A,B,C,E,Q
@@ -125,7 +117,7 @@ def get_plane_containing_two_incident_lines(line1, line2):
             return [fct[0] for fct in plane_factored if [v in fct[0].variables() for v in vrs] != [False for i in range(4)]][0]
                         
 
-def solve_linear_system2(eqns, variables, param):
+def solve_linear_system_in_fraction_field(eqns, variables, param):
     A = matrix([[eqn.coefficient(var) for var in variables] for eqn in eqns])
     b = matrix([sum([-eqn.coefficient(par)*par for par in param]) for eqn in eqns]).T
     return A.solve_right(b)
@@ -141,7 +133,7 @@ def find_projectivity(base_five_points, L_set2):
     system = matrix([base_five_points[i] for i in range(5)])*M
     b = diagonal_matrix(vrs[-5:])*matrix(points2[i] for i in range(5))
     eqn = system - b
-    sol = solve_linear_system2(eqn.list(), vrs[0:20], [vrs[-1]])
+    sol = solve_linear_system_in_fraction_field(eqn.list(), vrs[0:20], [vrs[-1]])
     sol = sol*sol.denominator()
     sol = [SS(el) for el in sol.list()]
     sost = {vrs[i] : sol[i] for i in range(16)}
@@ -158,24 +150,27 @@ def plane_coefficients(plane):
     return [plane.coefficient(vr) for vr in plane.parent().gens()[0:4]]
 
 
-def are_vectors_proportional(elem1, elem2):
-    e1 = elem1.nonzero_positions()
-    e2 = elem2.nonzero_positions()
-    if len(e1)!=len(e2):
+def are_vectors_proportional(vec1, vec2):
+    nz1 = vec1.nonzero_positions()
+    nz2 = vec2.nonzero_positions()
+    #check if the vectors have same number of     
+    #nonzero elements in the same positions
+    if len(nz1)!=len(nz2):
         return False
-    for i in range(len(e1)):
-        if e1[i] != e2[i]:
+    for i in range(len(nz1)):
+        if nz1[i] != nz2[i]:
             return False
-    lin_comb = elem2[e2[0]]*elem1 - elem1[e1[0]]*elem2
-    if lin_comb == vector([0 for i in range(len(elem1))]):
+    #check if they are proportional
+    lin_comb = vec2[nz2[0]]*vec1 - vec1[nz1[0]]*vec2
+    if lin_comb == vector([0 for i in range(len(vec1))]):
         return True
     else:
         return False
     
 def are_matrices_equal(m1, m2):
-    elem1 = vector(m1.list())
-    elem2 = vector(m2.list())
-    return are_vectors_proportional(elem1, elem2)
+    vec1 = vector(m1.list())
+    vec2 = vector(m2.list())
+    return are_vectors_proportional(vec1, vec2)
     
     
 def solve_linear_system(eqns, variables, param):

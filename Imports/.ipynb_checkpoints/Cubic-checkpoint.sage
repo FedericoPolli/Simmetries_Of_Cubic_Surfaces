@@ -229,9 +229,13 @@ class Cubic():
             if perm_L_set not in resulting_L_sets:
                 resulting_L_sets.append(perm_L_set)
         return self.find_all_proj_parallel(resulting_L_sets) 
-
+    
+    #from the classification as E, F, G returns the actual lines in plucker coordinates
+    def get_L_set_in_plucker(self, L_set):
+        return tuple(map(lambda uu: self.cl_lines[uu], L_set))
+    
     def find_all_projectivities(self, L_set, base_five_points):
-        L2 = get_L_set_in_plucker(self.cl_lines, L_set)
+        L2 = self.get_L_set_in_plucker(L_set)
         M = find_projectivity(base_five_points, L2)
         return M  
 
@@ -242,7 +246,7 @@ class Cubic():
         if os.name == "nt":
             freeze_support()
         pool = mp.Pool(mp.cpu_count()-1)
-        L_set_base = get_L_set_in_plucker(self.cl_lines, ['E1', 'G4', 'E2', 'G3', 'E3'])
+        L_set_base = self.get_L_set_in_plucker(['E1', 'G4', 'E2', 'G3', 'E3'])
         base_five_points = get_five_points_in_general_position(L_set_base)
         all_param = ((L_set, base_five_points) for L_set in all_L_sets)
         result = pool.map(self.find_proj_parallel, all_param) 
