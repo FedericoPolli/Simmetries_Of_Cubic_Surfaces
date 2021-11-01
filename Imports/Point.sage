@@ -1,6 +1,6 @@
-class Point():  
+class Point:
     def __init__(self, components):
-        self.P = components[0].parent()
+        self._poly_ring = components[0].parent()
         mcd = gcd(components)
         temp = vector([comp//mcd for comp in components])
         temp = temp/gcd([gcd(el.coefficients()) for el in temp])
@@ -11,7 +11,7 @@ class Point():
     
     def subs(self, sost):
         components = vector([comp.subs(sost)for comp in self.components])
-        return Point([self.P(el) for el in components*components.denominator()])
+        return Point([self._poly_ring(el) for el in components * components.denominator()])
     
     def __str__(self):
         return self.components.__str__()
@@ -43,4 +43,4 @@ class Point():
         return Point(other * self.components)
         
     def parent(self):
-        return self.P
+        return self._poly_ring
