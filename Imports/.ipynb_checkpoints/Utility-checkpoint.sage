@@ -32,9 +32,9 @@ def find_all_L_sets():
                         all_L_sets.append((key1, key2, key3, key4, key5))
     return all_L_sets
 
-#E_i does not meet G_j if i=j
-#E_i, G_i do not meet F_jk if i!=j and i!=k
-#F_ij does not meet F_kl if i,j,k,l are not all different
+# E_i does not meet G_j if i=j
+# E_i, G_i do not meet F_jk if i!=j and i!=k
+# F_ij does not meet F_kl if i,j,k,l are not all different
 def get_non_incident_keys(key):
     non_incident_keys = []
     if key[0] == 'E':
@@ -42,47 +42,115 @@ def get_non_incident_keys(key):
         non_incident_keys += ['E' + str(i + 1) for i in range(6) if i + 1 != index]
         non_incident_keys.append('G' + str(index))
         non_incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
-                               if i + 1 != index and j + 1 != index]
+                              if i + 1 != index and j + 1 != index]
     elif key[0] == 'G':
         index = int(key[1])
         non_incident_keys += ['G' + str(i + 1) for i in range(6) if i + 1 != index]
         non_incident_keys.append('E' + str(index))
         non_incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
-                               if i + 1 != index and j + 1 != index]
+                              if i + 1 != index and j + 1 != index]
     else:
         index1 = int(key[1])
         index2 = int(key[2])
         non_incident_keys += ['E' + str(i + 1) for i in range(6) if i + 1 != index1 and i + 1 != index2]
         non_incident_keys += ['G' + str(i + 1) for i in range(6) if i + 1 != index1 and i + 1 != index2]
         non_incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
-                               if len(set([i + 1, j + 1, index1, index2])) < 4]
+                              if len({i + 1, j + 1, index1, index2}) < 4]
         non_incident_keys.remove('F' + str(index1) + str(index2))
     return non_incident_keys
 
-#E_i meets G_j if i!=j
-#E_i, G_i meets F_jk if i=j or i=k
-#F_ij meets F_kl if i,j,k,l are all different
+
+# E_i meets G_j if i!=j
+# E_i, G_i meets F_jk if i=j or i=k
+# F_ij meets F_kl if i,j,k,l are all different
 def get_incident_keys(key):
     incident_keys = []
     if key[0] == 'E':
         index = int(key[1])
         incident_keys += ['G' + str(i + 1) for i in range(6) if i + 1 != index]
         incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
-                           if i + 1 == index or j + 1 == index]
+                          if i + 1 == index or j + 1 == index]
     elif key[0] == 'G':
         index = int(key[1])
         incident_keys += ['E' + str(i + 1) for i in range(6) if i + 1 != index]
         incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
-                           if i + 1 == index or j + 1 == index]
+                          if i + 1 == index or j + 1 == index]
     else:
         index1 = int(key[1])
         index2 = int(key[2])
         incident_keys += ['E' + str(i + 1) for i in range(6) if i + 1 == index1 or i + 1 == index2]
         incident_keys += ['G' + str(i + 1) for i in range(6) if i + 1 == index1 or i + 1 == index2]
         incident_keys += ['F' + str(i + 1) + str(j + 1) for i in range(6) for j in range(i + 1, 6)
-                           if len(set([i + 1, j + 1, index1, index2])) == 4]
+                          if len({i + 1, j + 1, index1, index2}) == 4]
     return incident_keys
+
+
+def find_all_permutations():
+    all_perm = []
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
+            'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    for key1 in keys:
+        non_in_1 = set(get_non_incident_keys(key1))
+        in_1 = set(get_incident_keys(key1))
+        for key2 in non_in_1:
+            non_in_2 = set(get_non_incident_keys(key2))
+            in_2 = set(get_incident_keys(key2))
+            for key3 in non_in_1.intersection(non_in_2):
+                non_in_3 = set(get_non_incident_keys(key3))
+                in_3 = set(get_incident_keys(key3))
+                for key4 in non_in_1.intersection(non_in_2).intersection(non_in_3):
+                    non_in_4 = set(get_non_incident_keys(key4))
+                    in_4 = set(get_incident_keys(key4))
+                    for key5 in non_in_1.intersection(non_in_2).intersection(non_in_3).intersection(non_in_4):
+                        non_in_5 = set(get_non_incident_keys(key5))
+                        in_5 = set(get_incident_keys(key5))
+                        for key6 in non_in_1.intersection(non_in_2).intersection(non_in_3).intersection(
+                                non_in_4).intersection(non_in_5):
+                            non_in_6 = set(get_non_incident_keys(key6))
+                            in_6 = set(get_incident_keys(key6))
+                            E = [key1, key2, key3, key4, key5, key6]
+                            non_incident = [non_in_1, non_in_2, non_in_3, non_in_4, non_in_5, non_in_6]
+                            incident = [in_1, in_2, in_3, in_4, in_5, in_6]
+                            G = []
+                            for i in range(6):
+                                s = set([key for key in keys if key not in E])
+                                for j in range(6):
+                                    if j != i:
+                                        s.intersection_update(incident[j])
+                                    else:
+                                        s.intersection_update(non_incident[j])
+                                G.append(list(s)[0])
+                            F = []
+                            for i in range(5):
+                                for j in range(i + 1, 6):
+                                    s = set([key for key in keys if key not in E and key not in G])
+                                    for k in range(6):
+                                        if i == k or j == k:
+                                            s.intersection_update(incident[k])
+                                        else:
+                                            s.intersection_update(non_incident[k])
+                                    F.append(list(s)[0])
+                            all_perm.append(E + G + F)
+    return all_perm
         
+def find_all_triplets_of_coplanar_lines():
+    all_triplets = []
+    for i in range(1,7):
+        for j in range(1,7):
+            if i < j:
+                all_triplets.append(['E'+str(i), 'G'+str(j), 'F'+str(i)+str(j)])
+            elif i>j:
+                all_triplets.append(['E'+str(i), 'G'+str(j), 'F'+str(j)+str(i)])                
+    for j in range(2,7):
+        for k in range(2,6):
+            for l in range(3,7):
+                for m in range(2,6):
+                    for n in range(3,7):
+                        if k<l and m<n and k<n and set((j,k,l,m,n)) == set((2,3,4,5,6)):
+                            if ['F'+str(1)+str(j), 'F'+str(m)+str(n), 'F'+str(k)+str(l)] not in all_triplets:
+                                all_triplets.append(['F'+str(1)+str(j), 'F'+str(k)+str(l), 'F'+str(m)+str(n)])
+    return all_triplets   
+
 #TOFIX            
 # A = l1 ∩ l2, B = l1 ∩ l4, C = l3 ∩ l4, D = l2 ∩ l3, E = l2 ∩ l5
 # P := l4 ∩ <l2 + l5>, Q := <P + D> ∩ l5.
@@ -193,25 +261,7 @@ def find_all_tritangent_planes(cl_lines):
         lines_dict = {k:cl_lines.get(k) for k in triplet}
         planes.append(tritangent_plane(plane, lines_dict))
     return planes
-
-
-def find_all_triplets_of_coplanar_lines():
-    all_triplets = []
-    for i in range(1,7):
-        for j in range(1,7):
-            if i < j:
-                all_triplets.append(['E'+str(i), 'G'+str(j), 'F'+str(i)+str(j)])
-            elif i>j:
-                all_triplets.append(['E'+str(i), 'G'+str(j), 'F'+str(j)+str(i)])                
-    for j in range(2,7):
-        for k in range(2,6):
-            for l in range(3,7):
-                for m in range(2,6):
-                    for n in range(3,7):
-                        if k<l and m<n and k<n and set((j,k,l,m,n)) == set((2,3,4,5,6)):
-                            if ['F'+str(1)+str(j), 'F'+str(m)+str(n), 'F'+str(k)+str(l)] not in all_triplets:
-                                all_triplets.append(['F'+str(1)+str(j), 'F'+str(k)+str(l), 'F'+str(m)+str(n)])
-    return all_triplets    
+ 
     
 def remove_sing_factors(poly, sing_locus):
     sing_locus_factors = [el[0] for el in list(sing_locus)]+[-el[0] for el in list(sing_locus)]
@@ -229,52 +279,7 @@ def change_coord(proj):
     vrs = proj.base_ring().gens()[0:4]
     change_coord = vector(vrs)*proj
     return {vrs[i] : change_coord[i] for i in range(4)}
-    
-#Tofix    
-def find_all_permutations(keys):
-    all_perm = []
-    for key1 in keys:
-        non_in_1 = set(get_non_incident_keys(key1))
-        in_1 = set(get_incident_keys(key1))
-        for key2 in non_in_1:
-            non_in_2 = set(get_non_incident_keys(key2))
-            in_2 = set(get_incident_keys(key2))
-            for key3 in non_in_1.intersection(non_in_2):
-                non_in_3 = set(get_non_incident_keys(key3))
-                in_3 = set(get_incident_keys(key3))
-                for key4 in non_in_1.intersection(non_in_2).intersection(non_in_3):
-                    non_in_4 = set(get_non_incident_keys(key4))
-                    in_4 = set(get_incident_keys(key4))
-                    for key5 in non_in_1.intersection(non_in_2).intersection(non_in_3).intersection(non_in_4):
-                        non_in_5 = set(get_non_incident_keys(key5))
-                        in_5 = set(get_incident_keys(key5))
-                        for key6 in non_in_1.intersection(non_in_2).intersection(non_in_3).intersection(non_in_4).intersection(non_in_5):
-                            E = [key1, key2, key3, key4, key5, key6]
-                            non_in_6 = set(get_non_incident_keys(key6))
-                            in_6 = set(get_incident_keys(key6))
-                            not_in = [non_in_1, non_in_2, non_in_3, non_in_4, non_in_5, non_in_6]
-                            inc = [in_1, in_2, in_3, in_4, in_5, in_6]
-                            G = []
-                            for i in range(6):
-                                s = set([key for key in keys if key not in E])
-                                for j in range(6):
-                                    if j!=i:
-                                        s.intersection_update(inc[j])
-                                    else:
-                                        s.intersection_update(not_in[j])
-                                G.append(list(s)[0])
-                            F=[]
-                            for i in range(5):
-                                for j in range(i+1, 6):
-                                    s = set([key for key in keys if key not in E and key not in G])
-                                    for k in range(6):
-                                        if i == k or j == k:
-                                            s.intersection_update(inc[k])
-                                        else:
-                                            s.intersection_update(not_in[k])
-                                    F.append(list(s)[0])
-                            all_perm.append(E+G+F)                           
-    return all_perm
+
     
 def find_conditions_for_subfamilies(cubic, projectivities, simmetries):
     mon = ((x+y+z+t)^3).monomials()

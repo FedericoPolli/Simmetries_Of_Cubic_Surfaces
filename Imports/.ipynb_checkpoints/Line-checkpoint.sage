@@ -19,7 +19,7 @@ class Line():
    
     def __eq__(self, other_line):
         if isinstance(other_line, Line):
-            return are_vectors_proportional(self.plucker.components, other_line.plucker.components)
+            return self.plucker == other_line.plucker
         return False
              
     def subs(self, sost):

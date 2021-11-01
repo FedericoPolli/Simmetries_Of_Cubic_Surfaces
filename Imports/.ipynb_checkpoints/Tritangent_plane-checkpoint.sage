@@ -16,7 +16,7 @@ class tritangent_plane():
     
     def subs(self, sost):
         plane = self.P(self.plane.subs(sost).numerator())
-        lines_dict = {key:value.subs(sost) for key, value in self.lines_dict.items()}
+        lines_dict = {key:line.subs(sost) for key, line in self.lines_dict.items()}
         conditions = self.conditions.subs(sost)
         conditions = self.P(conditions*conditions.denominator())
         if conditions != 0:
