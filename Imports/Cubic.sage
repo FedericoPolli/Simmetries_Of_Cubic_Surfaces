@@ -150,7 +150,6 @@ class Cubic:
                 E4 = line
                 break
         E = self._get_other_skew_lines([E1, E2, E3, E4])
-        # testing
         if self.P.gens()[-3].divides(E[-1].plucker[-1]):
             E[-2], E[-1] = E[-1], E[-2]
         return E
@@ -193,7 +192,7 @@ class Cubic:
             line2 = self.cl_lines.get(triplet[1])
             plane = get_plane_containing_two_incident_lines(line1, line2)
             lines_dict = {k: self.cl_lines.get(k) for k in triplet}
-            planes.append(tritangent_plane(plane, lines_dict, self.sing_cubic))
+            planes.append(TritangentPlane(plane, lines_dict, self.sing_cubic))
         return planes
 
     def find_simmetries(self, projectivities=None):
@@ -235,8 +234,7 @@ class Cubic:
                 resulting_L_sets.append(perm_L_set)
         return self.find_all_proj_parallel(resulting_L_sets)
 
-        # from the classification as E, F, G returns the actual lines in plucker coordinates
-
+    # from the classification as E, F, G returns the actual lines in plucker coordinates
     def get_L_set_in_plucker(self, L_set):
         return tuple(map(lambda uu: self.cl_lines[uu], L_set))
 
@@ -277,3 +275,27 @@ class Cubic:
             if flag is True:
                 adm_perm.append(perm)
         return adm_perm
+
+    def find_conditions_for_subfamilies(self, projectivities, simmetries):
+        vrs = self.P.gens()[0:4]
+        mon = (sum(vrs) ^ 3).monomials()
+        conditions = []
+        for M in [proj for proj in projectivities if proj not in simmetries]:
+            sost = change_coord(M)
+            new_cubic = remove_sing_factors(self.eqn.subs(sost), self.sing_cubic)
+            minor = list(set(
+                matrix([[new_cubic.coefficient(mn) for mn in mon], [self.eqn.coefficient(mn) for mn in mon]]).minors(2)))
+            minor = [remove_sing_factors(el, self.sing_cubic) for el in minor if el != 0]
+            prim_deco = self.P.ideal(minor).radical().primary_decomposition()
+            for ideale in prim_deco:
+                if self.is_ideal_valid(ideale):
+                    conditions.append(ideale.gens())
+        return list(set(conditions))
+
+    def is_ideal_valid(self, ideal):
+        if self.sing_cubic.value() in ideal:
+            return False
+        for poly in list(set([pl.conditions for pl in self.tritangent_planes if pl.conditions != 0])):
+            if poly in ideal:
+                return False
+        return True

@@ -158,24 +158,14 @@ def find_all_triplets_of_coplanar_lines():
     return all_triplets
 
 
-# TOFIX
 # A = l1 ∩ l2, B = l1 ∩ l4, C = l3 ∩ l4, D = l2 ∩ l3, E = l2 ∩ l5
 # P := l4 ∩ <l2 + l5>, Q := <P + D> ∩ l5.
 def get_five_points_in_general_position(L_set):
     A = L_set[0].intersection_point(L_set[1])
     B = L_set[0].intersection_point(L_set[3])
     C = L_set[2].intersection_point(L_set[3])
-    D = L_set[1].intersection_point(L_set[2])
     E = L_set[1].intersection_point(L_set[4])
-
     plane_l2_l5 = get_plane_containing_two_incident_lines(L_set[1], L_set[4])
-    plane_coeff = plane_coefficients(plane_l2_l5)
-    a = vector(plane_coeff[1:4])
-    pl = L_set[3].plucker
-    d = vector(pl[0:3])
-    m = vector([pl[5], -pl[4], pl[3]])
-    P = [a.dot_product(d)] + list(a.cross_product(m) - plane_coeff[0] * d)
-
     plane_l3_l4 = get_plane_containing_two_incident_lines(L_set[2], L_set[3])
     line_P_D = Line([plane_l2_l5, plane_l3_l4])
     Q = line_P_D.intersection_point(L_set[4])
@@ -195,6 +185,31 @@ def get_plane_containing_two_incident_lines(line1, line2):
             return \
                 [fct[0] for fct in plane_factored if
                  [v in fct[0].variables() for v in vrs] != [False for _ in range(4)]][0]
+
+
+# move to line
+def get_dual_coordinates(pl):
+    d = list(pl[0:3])
+    m = [pl[5], -pl[4], pl[3]]
+    return m + d
+
+
+# move to line
+def get_planes(pl):
+    # p01, p02, p03, p23, p31, p12
+    dpl = get_dual_coordinates(pl)
+    vrs = vector([x, y, z, t])
+    eqns = [vector([0, -dpl[0], -dpl[1], -dpl[2]]),
+            vector([dpl[0], 0, dpl[5], -dpl[4]]),
+            vector([dpl[1], dpl[5], 0, -dpl[3]]),
+            vector([dpl[2], -dpl[4], dpl[3], 0])]
+    planes = [eqn.dot_product(vrs) for eqn in eqns if eqn.dot_product(vrs) != 0]
+    for plane in planes[1:]:
+        coeff1 = vector(plane_coefficients(planes[0]))
+        coeff2 = vector(plane_coefficients(plane))
+        if not are_vectors_proportional(coeff1, coeff2):
+            return [planes[0], plane]
+    return None
 
 
 def solve_linear_system_in_fraction_field(eqns, variables, param):
@@ -264,19 +279,6 @@ def solve_linear_system(eqns, variables, param):
     return [sol[i, 0] for i in range(len(variables))] + [det(A) * par for par in param]
 
 
-# TOFIX move to cubic
-def find_all_tritangent_planes(cl_lines):
-    all_triplets = find_all_triplets_of_coplanar_lines()
-    planes = []
-    for triplet in all_triplets:
-        line1 = cl_lines.get(triplet[0])
-        line2 = cl_lines.get(triplet[1])
-        plane = get_plane_containing_two_incident_lines(line1, line2)
-        lines_dict = {k: cl_lines.get(k) for k in triplet}
-        planes.append(tritangent_plane(plane, lines_dict))
-    return planes
-
-
 def remove_sing_factors(poly, sing_locus):
     sing_locus_factors = [el[0] for el in list(sing_locus)] + [-el[0] for el in list(sing_locus)]
     poly_factorization = poly.factor()
@@ -294,64 +296,11 @@ def change_coord(proj):
     coordinate_change = vector(vrs) * proj
     return {vrs[i]: coordinate_change[i] for i in range(4)}
 
-
-# move to cubic
-def find_conditions_for_subfamilies(cubic, projectivities, simmetries):
-    mon = ((x + y + z + t) ^ 3).monomials()
-    conditions = []
-    for M in [proj for proj in projectivities if proj not in simmetries]:
-        sost = change_coord(M)
-        new_cubic = remove_sing_factors(cubic.eqn.subs(sost), cubic.sing_cubic)
-        minor = list(set(
-            matrix([[new_cubic.coefficient(mn) for mn in mon], [cubic.eqn.coefficient(mn) for mn in mon]]).minors(2)))
-        minor = [remove_sing_factors(el, cubic.sing_cubic) for el in minor if el != 0]
-        prim_deco = cubic.P.ideal(minor).radical().primary_decomposition()
-        for ideale in prim_deco:
-            if is_ideal_valid(ideale, cubic, cubic.sing_cubic):
-                conditions.append(ideale.gens())
-    return list(set(conditions))
-
-
-# move_to_cubic
-def is_ideal_valid(ideal, cubic, sing_cubics):
-    if sing_cubics in ideal:
-        return False
-    for poly in list(set([pl.conditions for pl in cubic.tritangent_planes if pl.conditions != 0])):
-        if poly in ideal:
-            return False
-    return True
-
-
 def apply_proj_to_eck(proj, eck):
     new_indices = []
     for i in range(len(eck)):
         new_indices.append(eck.index(eck[i] * proj) + 1)
     return new_indices
-
-
-# move to line
-def get_dual_coordinates(pl):
-    d = list(pl[0:3])
-    m = [pl[5], -pl[4], pl[3]]
-    return m + d
-
-
-# move to line
-def get_planes(pl):
-    # p01, p02, p03, p23, p31, p12
-    dpl = get_dual_coordinates(pl)
-    vrs = vector([x, y, z, t])
-    eqns = [vector([0, -dpl[0], -dpl[1], -dpl[2]]),
-            vector([dpl[0], 0, dpl[5], -dpl[4]]),
-            vector([dpl[1], dpl[5], 0, -dpl[3]]),
-            vector([dpl[2], -dpl[4], dpl[3], 0])]
-    planes = [eqn.dot_product(vrs) for eqn in eqns if eqn.dot_product(vrs) != 0]
-    for plane in planes[1:]:
-        coeff1 = vector(plane_coefficients(planes[0]))
-        coeff2 = vector(plane_coefficients(plane))
-        if not are_vectors_proportional(coeff1, coeff2):
-            return [planes[0], plane]
-    return None
 
 
 def apply_proj_to_lines(proj, lines):
@@ -362,6 +311,6 @@ def apply_proj_to_lines(proj, lines):
 
 
 def from_perm_to_labels(perm):
-    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
+    labels = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
             'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
-    return [keys[perm.dict()[key] - 1] for key in perm.dict()]
+    return [labels[perm.dict()[key] - 1] for key in perm.dict()]
