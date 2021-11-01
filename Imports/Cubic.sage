@@ -1,4 +1,6 @@
+import os
 import pickle
+import multiprocessing as mp
 
 class Cubic():
     def __init__(self, eqn, line, sing_cubic, lines = None, cl_lines = None, tritangent_planes = None):
@@ -152,10 +154,10 @@ class Cubic():
 
     def _get_other_skew_lines(self, skew_lines):
         for line in self.lines:
-            is_line_skew = true
+            is_line_skew = True
             for e in skew_lines:
                 if line.are_incident(e):
-                    is_line_skew = false
+                    is_line_skew = False
             if is_line_skew:       
                 skew_lines.append(line)
             if len(skew_lines) == 6:
@@ -166,8 +168,8 @@ class Cubic():
         G = [0 for i in range(6)]
         for line in possible_lines:
             incidence_relations = [line.are_incident(e) for e in E]
-            if incidence_relations.count(true) == 5:
-                G[incidence_relations.index(false)] = line
+            if incidence_relations.count(True) == 5:
+                G[incidence_relations.index(False)] = line
                 continue 
         return G
 
@@ -175,8 +177,8 @@ class Cubic():
         F = [[None for i in range(6)] for j in range(6)]
         for line in possible_lines:
             incidence_relations = [line.are_incident(e) for e in E]
-            first_index = incidence_relations.index(true)
-            second_index = incidence_relations.index(true, first_index+1)
+            first_index = incidence_relations.index(True)
+            second_index = incidence_relations.index(True, first_index + 1)
             F[first_index][second_index] = line
         return F
     
@@ -213,7 +215,7 @@ class Cubic():
 
     def find_simmetries_parallel(self, all_projectivities):
         if os.name == "nt":
-            freeze_support()
+            mp.freeze_support()
         pool = mp.Pool(mp.cpu_count()-1)
         all_param = ((proj,) for proj in all_projectivities)
         result = [el for el in pool.map(self.find_simmetries_wrapper, all_param) if el is not None]
@@ -244,7 +246,7 @@ class Cubic():
 
     def find_all_proj_parallel(self, all_L_sets):
         if os.name == "nt":
-            freeze_support()
+            mp.freeze_support()
         pool = mp.Pool(mp.cpu_count()-1)
         L_set_base = self.get_L_set_in_plucker(['E1', 'G4', 'E2', 'G3', 'E3'])
         base_five_points = get_five_points_in_general_position(L_set_base)
