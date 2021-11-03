@@ -47,7 +47,6 @@ class Cubic:
 
     def find_all_lines_on_cubic_surface(self, line):
         all_lines = [line]
-        # First line was already done
         for i in range(3):
             all_lines += self._get_new_lines_on_cubic_surface(all_lines[i], all_lines)
             if len(all_lines) == 27:

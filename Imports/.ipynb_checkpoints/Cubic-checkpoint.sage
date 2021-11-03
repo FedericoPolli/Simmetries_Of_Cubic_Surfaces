@@ -47,7 +47,6 @@ class Cubic:
 
     def find_all_lines_on_cubic_surface(self, line):
         all_lines = [line]
-        # First line was already done
         for i in range(3):
             all_lines += self._get_new_lines_on_cubic_surface(all_lines[i], all_lines)
             if len(all_lines) == 27:
@@ -276,10 +275,9 @@ class Cubic:
                 adm_perm.append(perm)
         return adm_perm
 
-    # move to cubic
     def find_conditions_for_subfamilies(self, projectivities, simmetries):
-        v = self.P.gens()[0:4]
-        mon = ((v[0] + v[1] + v[2] + v[3]) ^ 3).monomials()
+        vrs = self.P.gens()[0:4]
+        mon = (sum(vrs) ^ 3).monomials()
         conditions = []
         for M in [proj for proj in projectivities if proj not in simmetries]:
             sost = change_coord(M)
@@ -293,8 +291,6 @@ class Cubic:
                     conditions.append(ideale.gens())
         return list(set(conditions))
 
-
-    # move_to_cubic
     def is_ideal_valid(self, ideal):
         if self.sing_cubic.value() in ideal:
             return False

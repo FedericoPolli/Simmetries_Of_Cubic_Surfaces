@@ -314,3 +314,20 @@ def from_perm_to_labels(perm):
     labels = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
             'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     return [labels[perm.dict()[key] - 1] for key in perm.dict()]
+   
+def from_labels_to_perm(labels):
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    return Permutation([labels.index(label)+1 for label in keys]).to_permutation_group_element()
+
+#move to line
+def get_all_lines_incident_to_line(line, lines):
+    return [other_line for other_line in lines if line.are_incident(other_line) and line != other_line]
+   
+#move to line
+def is_line_on_plane(line, plane):
+    points = line.points
+    vrs = line.P.gens()[0:4]
+    for point in points:
+        if plane.subs({vrs[i]:point[i] for i in range(4)}) != 0:
+            return False
+    return True
