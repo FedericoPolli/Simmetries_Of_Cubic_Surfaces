@@ -13,7 +13,8 @@ def find_conic_discriminant(conic):
     ])
     return discriminant_matrix.det().factor()
 
-
+# L_set = (l1, l2, l3, l4, l5) where l1, l3, l5 are skew,
+# 
 def find_all_L_sets():
     all_L_sets = []
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
