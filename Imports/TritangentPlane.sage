@@ -25,7 +25,7 @@ class TritangentPlane:
 
     def __eq__(self, other):
         if isinstance(other, TritangentPlane):
-            return self.plane == other.plane
+            return sorted(self.labels) == sorted(other.labels)
         return False
 
     def find_conditions_for_eckardt_point(self):

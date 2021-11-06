@@ -13,7 +13,8 @@ def find_conic_discriminant(conic):
     ])
     return discriminant_matrix.det().factor()
 
-
+# An L_set is a quintuple (l1, l2, l3, l4, l5) where 
+# l1, l3, l5 are skew, l2 meets l1, l3, l5 while l4 meets l1 and l3.
 def find_all_L_sets():
     all_L_sets = []
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
@@ -87,7 +88,8 @@ def get_incident_keys(key):
                           if len({i + 1, j + 1, index1, index2}) == 4]
     return incident_keys
 
-
+# six mutually skew lines are enough to determine a permutation. It finds all the possible
+# sets of 6 mutually skew lines E_1, ..., E_6 and then computes the correspondnig G_i and F_ij
 def find_all_permutations():
     all_perm = []
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
@@ -111,9 +113,11 @@ def find_all_permutations():
                                 non_in_4).intersection(non_in_5):
                             non_in_6 = set(get_non_incident_keys(key6))
                             in_6 = set(get_incident_keys(key6))
-                            E = [key1, key2, key3, key4, key5, key6]
                             non_incident = [non_in_1, non_in_2, non_in_3, non_in_4, non_in_5, non_in_6]
                             incident = [in_1, in_2, in_3, in_4, in_5, in_6]
+                            E = [key1, key2, key3, key4, key5, key6]
+                            
+                            #G_i is the unique line meeting all E_j except E_i
                             G = []
                             for i in range(6):
                                 s = set([key for key in keys if key not in E])
@@ -123,6 +127,8 @@ def find_all_permutations():
                                     else:
                                         s.intersection_update(non_incident[j])
                                 G.append(list(s)[0])
+                                
+                            #F_ij is the unique line meeting E_i, E_j but not the other E_k
                             F = []
                             for i in range(5):
                                 for j in range(i + 1, 6):
@@ -240,9 +246,6 @@ def find_projectivity(base_five_points, L_set2):
     return proj * proj.denominator()
 
 
-# Utility -----------------------------------------------------------------------------
-
-
 def plane_coefficients(plane):
     return [plane.coefficient(vr) for vr in plane.parent().gens()[0:4]]
 
@@ -278,7 +281,8 @@ def solve_linear_system(eqns, variables, param):
     sol = A.adjugate() * b
     return [sol[i, 0] for i in range(len(variables))] + [det(A) * par for par in param]
 
-
+# removes singular factors from polynomial by checking each factor 
+# of the singular locus against the polynomial
 def remove_sing_factors(poly, sing_locus):
     sing_locus_factors = [el[0] for el in list(sing_locus)] + [-el[0] for el in list(sing_locus)]
     poly_factorization = poly.factor()
@@ -290,31 +294,33 @@ def remove_sing_factors(poly, sing_locus):
             product = product * fact ^ poly_powers[poly_factors.index(fact)]
     return poly // product
 
-
+#return a dictionary with the coordinate change associated to the projectivity
 def change_coord(proj):
     vrs = proj.base_ring().gens()[0:4]
     coordinate_change = vector(vrs) * proj
     return {vrs[i]: coordinate_change[i] for i in range(4)}
 
+#move to cubic
 def apply_proj_to_eck(proj, eck):
     new_indices = []
     for i in range(len(eck)):
         new_indices.append(eck.index(eck[i] * proj) + 1)
     return new_indices
 
-
+#move to cubic
 def apply_proj_to_lines(proj, lines):
     new_indices = []
     for i in range(len(lines)):
         new_indices.append(lines.index(lines[i].apply_proj(proj)) + 1)
     return new_indices
 
-
+#given a permutation of the 27 lines, returns the associated permuted labels
 def from_perm_to_labels(perm):
     labels = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
             'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     return [labels[perm.dict()[key] - 1] for key in perm.dict()]
-   
+  
+#given the permuted labels, returns a permutation group element
 def from_labels_to_perm(labels):
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     return Permutation([labels.index(label)+1 for label in keys]).to_permutation_group_element()
