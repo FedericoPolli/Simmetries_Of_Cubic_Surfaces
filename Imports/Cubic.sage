@@ -4,16 +4,17 @@ import multiprocessing as mp
 
 
 class Cubic:
-    def __init__(self, eqn, line, sing_cubic, lines=None, cl_lines=None, tritangent_planes=None):
+    def __init__(self, eqn, line, sing_locus, lines=None, cl_lines=None, tritangent_planes=None):
         self.eqn = eqn
         self.P = eqn.parent()
-        if isinstance(sing_cubic, Factorization):
-            self.sing_cubic = sing_cubic
+        if isinstance(sing_locus, Factorization):
+            self.sing_locus = sing_locus
         else:
-            self.sing_cubic = sing_cubic.factor()
+            self.sing_locus = sing_locus.factor()
         if lines is None or cl_lines is None or tritangent_planes is None:
             self.lines = self.find_all_lines_on_cubic_surface(line)
             self.cl_lines = self.classify_lines_on_cubic_surface()
+            self.lines = list(self.cl_lines.values())
             self.tritangent_planes = self.find_tritangent_planes()
         else:
             self.lines = lines
@@ -32,15 +33,15 @@ class Cubic:
         return self.eqn.__repr_html__()
 
     def subs(self, sost):
-        sing_subs = self.sing_cubic.value().subs(sost)
-        sing_cubic = (self.P(sing_subs * (sing_subs.denominator()) ^ 2)).factor()
-        eqn = remove_sing_factors(self.P(self.eqn.subs(sost).numerator()), sing_cubic)
-        lines = [line.subs(sost) for line in self.lines]
+        sing_subs = self.sing_locus.value().subs(sost)
+        if sing_subs == 0:
+            raise ValueError('Cubic is singular')
+        sing_locus = (self.P(sing_subs * (sing_subs.denominator()) ^ 2)).factor()
+        eqn = remove_sing_factors(self.P(self.eqn.subs(sost).numerator()), sing_locus)
         cl_lines = {key: value.subs(sost) for key, value in self.cl_lines.items()}
-        for pl in self.tritangent_planes:
-            pl.set_sing_cubic(sing_cubic)
-        tritangent_planes = [pl.subs(sost) for pl in self.tritangent_planes]
-        return Cubic(eqn, None, sing_cubic, lines, cl_lines, tritangent_planes)
+        lines = list(cl_lines.values())
+        tritangent_planes = [pl.update_with_sostitution(sost, cl_lines, sing_locus) for pl in self.tritangent_planes]
+        return Cubic(eqn, lines[0], sing_locus, lines, cl_lines, tritangent_planes)
 
     def factor(self):
         return self.eqn.factor()
@@ -187,11 +188,11 @@ class Cubic:
         all_triplets = find_all_triplets_of_coplanar_lines()
         planes = []
         for triplet in all_triplets:
-            line1 = self.cl_lines.get(triplet[0])
-            line2 = self.cl_lines.get(triplet[1])
+            line1 = self.cl_lines[triplet[0]]
+            line2 = self.cl_lines[triplet[1]]
             plane = get_plane_containing_two_incident_lines(line1, line2)
-            lines_dict = {k: self.cl_lines.get(k) for k in triplet}
-            planes.append(TritangentPlane(plane, lines_dict, self.sing_cubic))
+            lines_dict = {k: self.cl_lines[k] for k in triplet}
+            planes.append(TritangentPlane(plane, lines_dict, self.sing_locus))
         return planes
 
     def find_simmetries(self, projectivities=None):
@@ -281,10 +282,10 @@ class Cubic:
         conditions = []
         for M in [proj for proj in projectivities if proj not in simmetries]:
             sost = change_coord(M)
-            new_cubic = remove_sing_factors(self.eqn.subs(sost), self.sing_cubic)
+            new_cubic = remove_sing_factors(self.eqn.subs(sost), self.sing_locus)
             minor = list(set(
                 matrix([[new_cubic.coefficient(mn) for mn in mon], [self.eqn.coefficient(mn) for mn in mon]]).minors(2)))
-            minor = [remove_sing_factors(el, self.sing_cubic) for el in minor if el != 0]
+            minor = [remove_sing_factors(el, self.sing_locus) for el in minor if el != 0]
             prim_deco = self.P.ideal(minor).radical().primary_decomposition()
             for ideale in prim_deco:
                 if self.is_ideal_valid(ideale):
@@ -292,9 +293,23 @@ class Cubic:
         return list(set(conditions))
 
     def is_ideal_valid(self, ideal):
-        if self.sing_cubic.value() in ideal:
+        if self.sing_locus.value() in ideal:
             return False
         for poly in list(set([pl.conditions for pl in self.tritangent_planes if pl.conditions != 0])):
             if poly in ideal:
                 return False
         return True
+    
+    def apply_proj_to_eck(self, proj):
+        new_indices = []
+        eck = self.eckardt_points
+        for i in range(len(eck)):
+            new_indices.append(eck.index(eck[i] * proj) + 1)
+        return new_indices
+
+    def apply_proj_to_lines(self, proj):
+        new_indices = []
+        for i in range(len(self.lines)):
+            new_indices.append(self.lines.index(self.lines[i].apply_proj(proj)) + 1)
+        return new_indices
+

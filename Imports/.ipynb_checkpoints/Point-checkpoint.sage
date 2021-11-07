@@ -51,6 +51,7 @@ class Point:
             return are_vectors_proportional(self.components, other_point.components)
         return False
     
+    #uses mul, rmul of underlying vector
     def __mul__(self, other):
         return Point(self.components * other)
         

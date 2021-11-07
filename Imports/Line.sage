@@ -79,3 +79,13 @@ class Line:
         sost = change_coord(proj)
         new_planes = [plane.subs(sost) for plane in self.planes]
         return Line(new_planes)
+
+    def get_all_lines_incident_to_self(self, lines):
+        return [other_line for other_line in lines if self.are_incident(other_line) and self != other_line]
+
+    def is_on_plane(self, plane):
+        vrs = self.P.gens()[0:4]
+        for point in self.points:
+            if plane.subs({vrs[i]:point[i] for i in range(4)}) != 0:
+                return False
+        return True

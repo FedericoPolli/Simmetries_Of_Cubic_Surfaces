@@ -1,4 +1,7 @@
 class Group:
+    """
+    Class that represent a matrix group
+    """
     def __init__(self, elements):
         self.elements = elements
         self.order = len(self.elements)

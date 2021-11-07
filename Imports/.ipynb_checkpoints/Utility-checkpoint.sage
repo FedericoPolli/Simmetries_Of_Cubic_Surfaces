@@ -193,18 +193,17 @@ def get_plane_containing_two_incident_lines(line1, line2):
                  [v in fct[0].variables() for v in vrs] != [False for _ in range(4)]][0]
 
 
-# move to line
 def get_dual_coordinates(pl):
     d = list(pl[0:3])
     m = [pl[5], -pl[4], pl[3]]
     return m + d
 
 
-# move to line
 def get_planes(pl):
     # p01, p02, p03, p23, p31, p12
     dpl = get_dual_coordinates(pl)
-    vrs = vector([x, y, z, t])
+    P = pl[0].parent()
+    vrs = vector(P.gens()[0:4])
     eqns = [vector([0, -dpl[0], -dpl[1], -dpl[2]]),
             vector([dpl[0], 0, dpl[5], -dpl[4]]),
             vector([dpl[1], dpl[5], 0, -dpl[3]]),
@@ -253,10 +252,10 @@ def plane_coefficients(plane):
 def are_vectors_proportional(vec1, vec2):
     nz1 = vec1.nonzero_positions()
     nz2 = vec2.nonzero_positions()
-    # check if the vectors have same number of
-    # nonzero elements in the same positions
+    # check if the vectors have same number of nonzero elements
     if len(nz1) != len(nz2):
         return False
+    # check if the nonzero elements are in the same positions
     for i in range(len(nz1)):
         if nz1[i] != nz2[i]:
             return False
@@ -300,20 +299,6 @@ def change_coord(proj):
     coordinate_change = vector(vrs) * proj
     return {vrs[i]: coordinate_change[i] for i in range(4)}
 
-#move to cubic
-def apply_proj_to_eck(proj, eck):
-    new_indices = []
-    for i in range(len(eck)):
-        new_indices.append(eck.index(eck[i] * proj) + 1)
-    return new_indices
-
-#move to cubic
-def apply_proj_to_lines(proj, lines):
-    new_indices = []
-    for i in range(len(lines)):
-        new_indices.append(lines.index(lines[i].apply_proj(proj)) + 1)
-    return new_indices
-
 #given a permutation of the 27 lines, returns the associated permuted labels
 def from_perm_to_labels(perm):
     labels = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
@@ -325,15 +310,3 @@ def from_labels_to_perm(labels):
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     return Permutation([labels.index(label)+1 for label in keys]).to_permutation_group_element()
 
-#move to line
-def get_all_lines_incident_to_line(line, lines):
-    return [other_line for other_line in lines if line.are_incident(other_line) and line != other_line]
-   
-#move to line
-def is_line_on_plane(line, plane):
-    points = line.points
-    vrs = line.P.gens()[0:4]
-    for point in points:
-        if plane.subs({vrs[i]:point[i] for i in range(4)}) != 0:
-            return False
-    return True
