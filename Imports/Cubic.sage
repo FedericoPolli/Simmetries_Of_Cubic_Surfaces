@@ -190,7 +190,7 @@ class Cubic:
         for triplet in all_triplets:
             line1 = self.cl_lines[triplet[0]]
             line2 = self.cl_lines[triplet[1]]
-            plane = get_plane_containing_two_incident_lines(line1, line2)
+            plane = line1.get_plane_containing_another_incident_line(line2)
             lines_dict = {k: self.cl_lines[k] for k in triplet}
             planes.append(TritangentPlane(plane, lines_dict, self.sing_locus))
         return planes

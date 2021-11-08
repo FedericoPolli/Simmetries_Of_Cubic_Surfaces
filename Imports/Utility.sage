@@ -171,32 +171,16 @@ def get_five_points_in_general_position(L_set):
     B = L_set[0].intersection_point(L_set[3])
     C = L_set[2].intersection_point(L_set[3])
     E = L_set[1].intersection_point(L_set[4])
-    plane_l2_l5 = get_plane_containing_two_incident_lines(L_set[1], L_set[4])
-    plane_l3_l4 = get_plane_containing_two_incident_lines(L_set[2], L_set[3])
+    plane_l2_l5 = L_set[1].get_plane_containing_another_incident_line(L_set[4])
+    plane_l3_l4 = L_set[2].get_plane_containing_another_incident_line(L_set[3])
     line_P_D = Line([plane_l2_l5, plane_l3_l4])
     Q = line_P_D.intersection_point(L_set[4])
     return A, B, C, E, Q
 
 
-# TOFIX move to line
-def get_plane_containing_two_incident_lines(line1, line2):
-    P1, P2 = line1.points
-    PL2 = line2.points
-    vrs = line1.P.gens()[0:4]
-    for point in PL2:
-        # check if point is on line1
-        if matrix([P1, P2, point]).rank() > 2:
-            # take determinant of 4x4 matrix to get equation
-            plane_factored = matrix([P1, P2, point, vrs]).det().factor()
-            return \
-                [fct[0] for fct in plane_factored if
-                 [v in fct[0].variables() for v in vrs] != [False for _ in range(4)]][0]
-
-
-def get_planes(pl):
-    # p01, p02, p03, p23, p31, p12
-    dpl = get_dual_plucker_coordinates(pl)
-    P = pl[0].parent()
+def get_two_planes_containing_line(line_in_plucker):
+    dpl = get_dual_plucker_coordinates(line_in_plucker)
+    P = line_in_plucker[0].parent()
     vrs = vector(P.gens()[0:4])
     eqns = [vector([0, -dpl[0], -dpl[1], -dpl[2]]),
             vector([dpl[0], 0, dpl[5], -dpl[4]]),
@@ -210,7 +194,7 @@ def get_planes(pl):
             return [planes[0], plane]
     return None
 
-
+# p01, p02, p03, p23, p31, p12
 def get_dual_plucker_coordinates(pl):
     d = list(pl[0:3])
     m = [pl[5], -pl[4], pl[3]]
@@ -288,9 +272,9 @@ def remove_sing_factors(poly, sing_locus):
     poly_factors = [el[0] for el in list(poly_factorization)]
     poly_powers = [el[1] for el in list(poly_factorization)]
     product = 1
-    for fact in sing_locus_factors:
-        if fact in poly_factors:
-            product = product * fact ^ poly_powers[poly_factors.index(fact)]
+    for factor in sing_locus_factors:
+        if factor in poly_factors:
+            product = product * factor ^ poly_powers[poly_factors.index(factor)]
     return poly // product
 
 #return a dictionary with the coordinate change associated to the projectivity
