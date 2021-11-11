@@ -266,6 +266,7 @@ def solve_linear_system(eqns, variables, param):
 
 # removes singular factors from polynomial by checking each factor 
 # of the singular locus against the polynomial
+# sing_locus is a Factorization object
 def remove_sing_factors(poly, sing_locus):
     sing_locus_factors = [el[0] for el in list(sing_locus)] + [-el[0] for el in list(sing_locus)]
     poly_factorization = poly.factor()

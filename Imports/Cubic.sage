@@ -7,22 +7,38 @@ class Cubic:
     def __init__(self, eqn, line, sing_locus, lines=None, cl_lines=None, tritangent_planes=None):
         self.eqn = eqn
         self.P = eqn.parent()
+        
+        #want the sing_locus to be already factorized to speedup calculations
         if isinstance(sing_locus, Factorization):
             self.sing_locus = sing_locus
         else:
             self.sing_locus = sing_locus.factor()
+            
+        # if no parameters passed calculate everything
         if lines is None or cl_lines is None or tritangent_planes is None:
             self.lines = self.find_all_lines_on_cubic_surface(line)
             self.cl_lines = self.classify_lines_on_cubic_surface()
-            self.lines = list(self.cl_lines.values())
+            self.lines = list(self.cl_lines.values())  #redefine self.lines in accordance with subs method
             self.tritangent_planes = self.find_tritangent_planes()
         else:
             self.lines = lines
             self.cl_lines = cl_lines
             self.tritangent_planes = tritangent_planes
-        self.eckardt_points = [pl.find_eckardt_point() for pl in self.tritangent_planes if pl.conditions == 0]
-        self.eckardt_points_labels = [pl.labels for pl in self.tritangent_planes if pl.conditions == 0]
-
+            
+        self.eckardt_points = [pl.find_eckardt_point() for pl in self.tritangent_planes if pl.has_eckardt_point()]
+        self.eckardt_points_labels = [pl.labels for pl in self.tritangent_planes if pl.has_eckardt_point()]
+ 
+    def find_tritangent_planes(self):
+        all_triplets = find_all_triplets_of_coplanar_lines()
+        planes = []
+        for triplet in all_triplets:
+            line1 = self.cl_lines[triplet[0]]
+            line2 = self.cl_lines[triplet[1]]
+            plane = line1.get_plane_containing_another_incident_line(line2)
+            lines_dict = {k: self.cl_lines[k] for k in triplet}
+            planes.append(TritangentPlane(plane, lines_dict, self.sing_locus))
+        return planes
+    
     def __str__(self):
         return self.eqn.__str__()
 
@@ -36,16 +52,19 @@ class Cubic:
         sing_subs = self.sing_locus.value().subs(sost)
         if sing_subs == 0:
             raise ValueError('Cubic is singular')
+        #multiply by denominator^2 to avoid missing factors
         sing_locus = (self.P(sing_subs * (sing_subs.denominator()) ^ 2)).factor()
         eqn = remove_sing_factors(self.P(self.eqn.subs(sost).numerator()), sing_locus)
-        cl_lines = {key: value.subs(sost) for key, value in self.cl_lines.items()}
-        lines = list(cl_lines.values())
+        cl_lines = {key: value.subs(sost) for key, value in self.cl_lines.items()} #calls Line.subs()
+        lines = list(cl_lines.values())    #to improve performance avoid resubbing
         tritangent_planes = [pl.update_with_sostitution(sost, cl_lines, sing_locus) for pl in self.tritangent_planes]
-        return Cubic(eqn, lines[0], sing_locus, lines, cl_lines, tritangent_planes)
+        return Cubic(eqn, lines[0], sing_locus, lines, cl_lines, tritangent_planes) 
 
     def factor(self):
         return self.eqn.factor()
 
+# Finding lines ------------------------------------------------------------------------------------
+    
     def find_all_lines_on_cubic_surface(self, line):
         all_lines = [line]
         for i in range(3):
@@ -123,7 +142,7 @@ class Cubic:
                 if deg > 1:
                     return fact[0], plane
 
-    # Classify lines ---------------------------------------------------------------------------------
+# Classify lines ------------------------------------------------------------------------------------
 
     def classify_lines_on_cubic_surface(self):
         E = self._find_E()
@@ -184,46 +203,8 @@ class Cubic:
             F[first_index][second_index] = line
         return F
 
-    def find_tritangent_planes(self):
-        all_triplets = find_all_triplets_of_coplanar_lines()
-        planes = []
-        for triplet in all_triplets:
-            line1 = self.cl_lines[triplet[0]]
-            line2 = self.cl_lines[triplet[1]]
-            plane = line1.get_plane_containing_another_incident_line(line2)
-            lines_dict = {k: self.cl_lines[k] for k in triplet}
-            planes.append(TritangentPlane(plane, lines_dict, self.sing_locus))
-        return planes
-
-    def find_simmetries(self, projectivities=None):
-        if projectivities is None:
-            projectivities = self.find_admissible_projectivities()
-        return self.find_simmetries_parallel(projectivities)
-
-    def find_simmetry(self, proj):
-        vrs = self.P.gens()[0:4]
-        mon = (sum(vrs) ^ 3).monomials()
-        change_coord = vector(vrs) * proj
-        sost = {vrs[i]: change_coord[i] for i in range(4)}
-        new_cubic = self.eqn.subs(sost)
-        coeffs = matrix([[self.eqn.coefficient(mn) for mn in mon], [new_cubic.coefficient(mn) for mn in mon]]).minors(2)
-        if coeffs == [0 for _ in range(len(coeffs))]:
-            return proj
-        else:
-            return None
-
-    def find_simmetries_wrapper(self, args):
-        return self.find_simmetry(*args)
-
-    def find_simmetries_parallel(self, all_projectivities):
-        if os.name == "nt":
-            mp.freeze_support()
-        pool = mp.Pool(mp.cpu_count() - 1)
-        all_param = ((proj,) for proj in all_projectivities)
-        result = [el for el in pool.map(self.find_simmetries_wrapper, all_param) if el is not None]
-        pool.close()
-        return result
-
+# Find projectivities -----------------------------------------------------------------------------
+    
     def find_admissible_projectivities(self, adm_perm=None):
         if adm_perm is None:
             adm_perm = self.find_admissible_permutations()
@@ -257,6 +238,39 @@ class Cubic:
         pool.close()
         return result
 
+#Find simmetries -------------------------------------------------------------------------------------
+    
+    def find_simmetries(self, projectivities=None):
+        if projectivities is None:
+            projectivities = self.find_admissible_projectivities()
+        return self.find_simmetries_parallel(projectivities)
+
+    def find_simmetry(self, proj):
+        vrs = self.P.gens()[0:4]
+        mon = (sum(vrs) ^ 3).monomials()
+        change_coord = vector(vrs) * proj
+        sost = {vrs[i]: change_coord[i] for i in range(4)}
+        new_cubic = self.eqn.subs(sost)
+        coeffs = matrix([[self.eqn.coefficient(mn) for mn in mon], [new_cubic.coefficient(mn) for mn in mon]]).minors(2)
+        if coeffs == [0 for _ in range(len(coeffs))]:
+            return proj
+        else:
+            return None
+
+    def find_simmetries_wrapper(self, args):
+        return self.find_simmetry(*args)
+
+    def find_simmetries_parallel(self, all_projectivities):
+        if os.name == "nt":
+            mp.freeze_support()
+        pool = mp.Pool(mp.cpu_count() - 1)
+        all_param = ((proj,) for proj in all_projectivities)
+        result = [el for el in pool.map(self.find_simmetries_wrapper, all_param) if el is not None]
+        pool.close()
+        return result
+
+#--------------------------------------------------------------------------------------------------
+    
     def find_admissible_permutations(self):
         with open('all_permutations.pickle', 'rb') as fil:
             all_permutations = pickle.load(fil)
