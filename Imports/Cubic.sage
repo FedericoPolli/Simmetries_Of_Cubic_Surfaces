@@ -48,11 +48,12 @@ class Cubic:
     def __repr_html__(self):
         return self.eqn.__repr_html__()
 
+    #update with sostitution all members of the class
     def subs(self, sost):
         sing_subs = self.sing_locus.value().subs(sost)
         if sing_subs == 0:
             raise ValueError('Cubic is singular')
-        #multiply by denominator^2 to avoid missing factors
+        #multiply by denominator^2 to avoid missing singular factors
         sing_locus = (self.P(sing_subs * (sing_subs.denominator()) ^ 2)).factor()
         eqn = remove_sing_factors(self.P(self.eqn.subs(sost).numerator()), sing_locus)
         cl_lines = {key: value.subs(sost) for key, value in self.cl_lines.items()} #calls Line.subs()
@@ -157,18 +158,21 @@ class Cubic:
 
     def _find_E(self):
         vrs = self.P.gens()[0:4]
+        #Base L-set
         E1 = Line([vrs[1], vrs[2]])
         E2 = Line([vrs[0], vrs[3]])
         E3 = Line([vrs[0] - vrs[1], vrs[2] + vrs[3]])
         G3 = Line([vrs[0] - vrs[3], vrs[1] - vrs[2]])
         G4 = Line([vrs[0], vrs[1]])
         E4 = []
-        for line in self.lines:
+        #E4 is the only line not incident to E1, E2, E3, G4 intersecting G3
+        for line in self.lines: 
             incidence_relations = [line.are_incident(e) for e in [E1, E2, E3, G4]]
             if incidence_relations == [False, False, False, False] and line.are_incident(G3):
                 E4 = line
                 break
         E = self._get_other_skew_lines([E1, E2, E3, E4])
+        #we want E5 to be the line whose last plucker coordinate is divisible by f
         if self.P.gens()[-3].divides(E[-1].plucker[-1]):
             E[-2], E[-1] = E[-1], E[-2]
         return E
@@ -179,6 +183,7 @@ class Cubic:
             for e in skew_lines:
                 if line.are_incident(e):
                     is_line_skew = False
+                    break
             if is_line_skew:
                 skew_lines.append(line)
             if len(skew_lines) == 6:
@@ -187,6 +192,7 @@ class Cubic:
 
     def _find_G(self, E, possible_lines):
         G = [0 for _ in range(6)]
+        #G_i is the only line meeting all E_j except E_i
         for line in possible_lines:
             incidence_relations = [line.are_incident(e) for e in E]
             if incidence_relations.count(True) == 5:
@@ -196,6 +202,7 @@ class Cubic:
 
     def _find_F(self, E, possible_lines):
         F = [[None for _ in range(6)] for _ in range(6)]
+        #Fij is the only line meeting E_i, E_j but not other E_k
         for line in possible_lines:
             incidence_relations = [line.are_incident(e) for e in E]
             first_index = incidence_relations.index(True)

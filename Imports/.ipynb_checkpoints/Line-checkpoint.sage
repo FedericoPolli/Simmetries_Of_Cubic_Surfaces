@@ -1,4 +1,3 @@
-#introduce class methods?
 class Line:
     def __init__(self, planes, points=None, plucker=None):
         self.P = planes[0].parent()
@@ -35,15 +34,17 @@ class Line:
             return Line(planes)   #if substituted points coincide, let Line constructor calculate new ones.
         return Line(planes, points, plucker)
 
-    #COMMENTS
+    #Starting from the planes containing this line, it finds two point on the line
+    #This could probably be simplified by directly calculating plucker cooordinates
+    #from the planes and then the points from the plucker coordinates.
     def get_two_points_on_line(self):
         vr = self.P.gens()
         M = matrix([plane_coefficients(plane) for plane in self.planes])
         minors = M.minors(2)
-        index = next(i[0] for i in enumerate(minors) if i[1] != 0)
+        index = next(i[0] for i in enumerate(minors) if i[1] != 0)  #find first nonzero minor
         possible_columns = {0: (0, 1), 1: (0, 2), 2: (0, 3), 3: (1, 2), 4: (1, 3), 5: (2, 3)}
         columns = possible_columns.get(index)
-        other_columns = tuple({0, 1, 2, 3} - set(columns))
+        other_columns = tuple({0, 1, 2, 3} - set(columns))  
         sol = solve_linear_system(self.planes, [vr[columns[0]], vr[columns[1]]],
                                   [vr[other_columns[0]], vr[other_columns[1]]])
         sost = {vr[columns[0]]: sol[0], vr[columns[1]]: sol[1], vr[other_columns[0]]: sol[2],

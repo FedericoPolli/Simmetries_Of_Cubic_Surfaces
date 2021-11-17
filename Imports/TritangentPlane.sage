@@ -41,7 +41,7 @@ class TritangentPlane:
             conditions1.append(remove_sing_factors(linear_prod, self.sing_locus))  
         
         # it is enough to consider the gcd of the list of minors so obtained.
-        #Uncomment the following lines to check if needed.
+        # Uncomment the following lines to check if needed.
         #print(gcd(conditions1))
         #print(P.ideal(conditions1).radical().primary_decomposition())
         return gcd(conditions1)
