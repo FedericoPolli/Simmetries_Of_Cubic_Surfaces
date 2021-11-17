@@ -207,22 +207,31 @@ def solve_linear_system_in_fraction_field(eqns, variables, param):
     return A.solve_right(b)
 
 
-# TOFIX
+# finds the matrix sending the base five points to the five points obtained from the other L-set
+# maybe should be moved to cubic.sage
 def find_projectivity(base_five_points, L_set2):
     P = L_set2[0].P
-    S = PolynomialRing(P.base_ring(), 21, 'v')
+    S = PolynomialRing(P.base_ring(), 21, 'v')  #build new polynomial ring with the variables needed
     SS = PolynomialRing(P.base_ring(), P.gens() + S.gens())
     vrs = SS.gens()[-21:]
     points2 = get_five_points_in_general_position(L_set2)
     M = matrix([[var for var in vrs[i:i + 4]] for i in range(0, 15, 4)])
+    
+    # for each point P_i in the base five points, we want P_i*M = P_i'
     system = matrix([base_five_points[i] for i in range(5)]) * M
     b = diagonal_matrix(vrs[-5:]) * matrix(points2[i] for i in range(5))
     eqn = system - b
     sol = solve_linear_system_in_fraction_field(eqn.list(), vrs[0:20], [vrs[-1]])
+    
+    #recast solution in polynomial ring
     sol = sol * sol.denominator()
     sol = [SS(el) for el in sol.list()]
     sost = {vrs[i]: sol[i] for i in range(16)}
+    
+    # get actual matrix without the added variables 
     proj = M.subs(sost).subs({SS.gens()[-1]: 1})
+    
+    #simplify matrix
     proj = (proj / gcd(proj.list())).list()
     proj = matrix([[P(el) for el in proj[i:i + 4]] for i in range(0, 15, 4)])
     proj = proj / gcd(gcd(proj.coefficients()[i].coefficients()) for i in range(len(proj.coefficients())))

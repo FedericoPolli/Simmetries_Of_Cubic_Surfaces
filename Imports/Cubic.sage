@@ -28,6 +28,7 @@ class Cubic:
         self.eckardt_points = [pl.find_eckardt_point() for pl in self.tritangent_planes if pl.has_eckardt_point()]
         self.eckardt_points_labels = [pl.labels for pl in self.tritangent_planes if pl.has_eckardt_point()]
  
+    # creates and populates all the 45 tritangent planes
     def find_tritangent_planes(self):
         all_triplets = find_all_triplets_of_coplanar_lines()
         planes = []
@@ -74,7 +75,7 @@ class Cubic:
                 break
         return all_lines
 
-    # Starting from the given lines, it tries to find new lines
+    # Gets possible new lines and filter to get only the actually new ones
     def _get_new_lines_on_cubic_surface(self, line, starting_lines):
         possible_new_lines = []
         possible_new_lines += self._find_lines_when_first_parameter_is_nonzero(line)
@@ -90,6 +91,7 @@ class Cubic:
                 new_lines.append(line1)
         return new_lines
 
+    #
     def _find_lines_when_first_parameter_is_nonzero(self, line):
         conic, plane = self._define_equations(line, 0)
         P = self.P
@@ -113,6 +115,7 @@ class Cubic:
             new_lines.append(Line([non_param_plane, factors[1]]))
         return new_lines
 
+    #
     def _find_lines_when_first_parameter_is_zero(self, line):
         conic, plane = self._define_equations(line, 1)
         P = self.P
@@ -131,6 +134,7 @@ class Cubic:
                 continue
         return new_lines
 
+    #
     def _define_equations(self, line, k):
         plane = line.planes[0] * self.P.gens()[-2] + line.planes[1] * self.P.gens()[-1]
         var = line.planes[k].variables()[0]
@@ -145,6 +149,7 @@ class Cubic:
 
 # Classify lines ------------------------------------------------------------------------------------
 
+    # classifies the lines as E, G, F
     def classify_lines_on_cubic_surface(self):
         E = self._find_E()
         G = self._find_G(E, [line for line in self.lines if line not in E])
@@ -186,7 +191,7 @@ class Cubic:
                     break
             if is_line_skew:
                 skew_lines.append(line)
-            if len(skew_lines) == 6:
+            if len(skew_lines) == 6:  #there are at most 6 skew lines
                 break
         return skew_lines
 
@@ -212,13 +217,15 @@ class Cubic:
 
 # Find projectivities -----------------------------------------------------------------------------
     
+    # given a list of permutations of the 27 lines, it finds the permuted base L-sets
+    # and finds the associated projectivities
     def find_admissible_projectivities(self, adm_perm=None):
         if adm_perm is None:
             adm_perm = self.find_admissible_permutations()
         resulting_L_sets = []
         for perm in adm_perm:
             perm_L_set = [perm[list(self.cl_lines.keys()).index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3']]
-            if perm_L_set not in resulting_L_sets:
+            if perm_L_set not in resulting_L_sets:   #avoid duplication
                 resulting_L_sets.append(perm_L_set)
         return self.find_all_proj_parallel(resulting_L_sets)
 
@@ -226,14 +233,7 @@ class Cubic:
     def get_L_set_in_plucker(self, L_set):
         return tuple(map(lambda uu: self.cl_lines[uu], L_set))
 
-    def find_all_projectivities(self, L_set, base_five_points):
-        L2 = self.get_L_set_in_plucker(L_set)
-        M = find_projectivity(base_five_points, L2)
-        return M
-
-    def find_proj_parallel(self, args):
-        return self.find_all_projectivities(*args)
-
+    # finds all the projectivities from the ginve L-sets in parallel
     def find_all_proj_parallel(self, all_L_sets):
         if os.name == "nt":
             mp.freeze_support()
@@ -241,32 +241,27 @@ class Cubic:
         L_set_base = self.get_L_set_in_plucker(['E1', 'G4', 'E2', 'G3', 'E3'])
         base_five_points = get_five_points_in_general_position(L_set_base)
         all_param = ((L_set, base_five_points) for L_set in all_L_sets)
-        result = pool.map(self.find_proj_parallel, all_param)
+        result = pool.map(self.find_proj_parallel_wrapper, all_param)
         pool.close()
         return result
 
+    def find_proj_parallel_wrapper(self, args):
+        return self.find_all_projectivities(*args)
+
+    def find_all_projectivities(self, L_set, base_five_points):
+        L2 = self.get_L_set_in_plucker(L_set)
+        M = find_projectivity(base_five_points, L2)
+        return M
+
 #Find simmetries -------------------------------------------------------------------------------------
     
+    # finds which projectivities is also a simmetry of this cubic
     def find_simmetries(self, projectivities=None):
         if projectivities is None:
             projectivities = self.find_admissible_projectivities()
         return self.find_simmetries_parallel(projectivities)
 
-    def find_simmetry(self, proj):
-        vrs = self.P.gens()[0:4]
-        mon = (sum(vrs) ^ 3).monomials()
-        change_coord = vector(vrs) * proj
-        sost = {vrs[i]: change_coord[i] for i in range(4)}
-        new_cubic = self.eqn.subs(sost)
-        coeffs = matrix([[self.eqn.coefficient(mn) for mn in mon], [new_cubic.coefficient(mn) for mn in mon]]).minors(2)
-        if coeffs == [0 for _ in range(len(coeffs))]:
-            return proj
-        else:
-            return None
-
-    def find_simmetries_wrapper(self, args):
-        return self.find_simmetry(*args)
-
+    # find simmetries in parallel
     def find_simmetries_parallel(self, all_projectivities):
         if os.name == "nt":
             mp.freeze_support()
@@ -276,20 +271,34 @@ class Cubic:
         pool.close()
         return result
 
+    def find_simmetries_wrapper(self, args):
+        return self.find_simmetry(*args)
+    
+    # check if the list of coefficients of this cubic and the new one are proportional
+    def find_simmetry(self, proj):
+        sost = change_coord(proj)
+        new_cubic = self.eqn.subs(sost)
+        mon = (sum(self.P.gens()[0:4]) ^ 3).monomials()
+        coeffs = matrix([[self.eqn.coefficient(mn) for mn in mon], [new_cubic.coefficient(mn) for mn in mon]]).minors(2)
+        if coeffs == [0 for _ in range(len(coeffs))]:
+            return proj
+        else:
+            return None
+
 #--------------------------------------------------------------------------------------------------
     
+    # find the permutations which send the set of this cubic's Eckard points to itself
     def find_admissible_permutations(self):
         with open('all_permutations.pickle', 'rb') as fil:
             all_permutations = pickle.load(fil)
         adm_perm = []
         keys = list(self.cl_lines.keys())
-        labels = [sorted(el.labels) for el in self.tritangent_planes if el.conditions == 0]
+        labels = [sorted(label) for label in self.eckardt_points_labels]
         for perm in all_permutations:
             flag = True
+            #check if each permuted label is still in Eckardt points labels
             for triple in labels:
-                new_triple = []
-                for label in triple:
-                    new_triple.append(perm[keys.index(label)])
+                new_triple = [perm[keys.index(label)] for label in triple]
                 if sorted(new_triple) not in labels:
                     flag = False
                     break
@@ -297,6 +306,9 @@ class Cubic:
                 adm_perm.append(perm)
         return adm_perm
 
+    
+    # studies the projectivities which do not send this cubic to itself in general to try to find
+    # values for the parameters for which some of these projectivities become simmetries
     def find_conditions_for_subfamilies(self, projectivities, simmetries):
         vrs = self.P.gens()[0:4]
         mon = (sum(vrs) ^ 3).monomials()
@@ -313,6 +325,8 @@ class Cubic:
                     conditions.append(ideale.gens())
         return list(set(conditions))
 
+    # check if ideal does not contain singular locus and  if it does not contain
+    # polynomials which would cause this cubic to have more eckardt points
     def is_ideal_valid(self, ideal):
         if self.sing_locus.value() in ideal:
             return False
@@ -320,7 +334,8 @@ class Cubic:
             if poly in ideal:
                 return False
         return True
-    
+ 
+    # applies simmetriy to eckardt points and returns the associated permutation
     def apply_proj_to_eck(self, proj):
         new_indices = []
         eck = self.eckardt_points
@@ -328,6 +343,7 @@ class Cubic:
             new_indices.append(eck.index(eck[i] * proj) + 1)
         return new_indices
 
+    # applies simmetriy to lines and returns the associated permutation
     def apply_proj_to_lines(self, proj):
         new_indices = []
         for i in range(len(self.lines)):
