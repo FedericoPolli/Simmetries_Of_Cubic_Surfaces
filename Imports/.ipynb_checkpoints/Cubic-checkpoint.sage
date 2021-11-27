@@ -238,9 +238,7 @@ class Cubic:
         if os.name == "nt":
             mp.freeze_support()
         pool = mp.Pool(mp.cpu_count() - 1)
-        L_set_base = self.get_L_set_in_plucker(['E1', 'G4', 'E2', 'G3', 'E3'])
-        base_five_points = get_five_points_in_general_position(L_set_base)
-        all_param = ((L_set, base_five_points) for L_set in all_L_sets)
+        all_param = ((L_set,) for L_set in all_L_sets)
         result = pool.map(self.find_proj_parallel_wrapper, all_param)
         pool.close()
         return result
@@ -248,9 +246,10 @@ class Cubic:
     def find_proj_parallel_wrapper(self, args):
         return self.find_all_projectivities(*args)
 
-    def find_all_projectivities(self, L_set, base_five_points):
+    def find_all_projectivities(self, L_set):
+        L_set_base = self.get_L_set_in_plucker(['E1', 'G4', 'E2', 'G3', 'E3'])
         L2 = self.get_L_set_in_plucker(L_set)
-        M = find_projectivity(base_five_points, L2)
+        M = find_projectivity(L_set_base, L2)
         return M
 
 #Find simmetries -------------------------------------------------------------------------------------

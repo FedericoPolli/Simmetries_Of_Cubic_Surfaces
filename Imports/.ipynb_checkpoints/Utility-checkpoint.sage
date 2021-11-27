@@ -207,18 +207,19 @@ def solve_linear_system_in_fraction_field(eqns, variables, param):
     return A.solve_right(b)
 
 
-# finds the matrix sending the base five points to the five points obtained from the other L-set
+# finds the matrix sending the five points of the first L-set to the five points obtained from the other L-set
 # maybe should be moved to cubic.sage
-def find_projectivity(base_five_points, L_set2):
+def find_projectivity(L_set1, L_set2):
     P = L_set2[0].P
     S = PolynomialRing(P.base_ring(), 21, 'v')  #build new polynomial ring with the variables needed
     SS = PolynomialRing(P.base_ring(), P.gens() + S.gens())
     vrs = SS.gens()[-21:]
+    points1 = get_five_points_in_general_position(L_set1)
     points2 = get_five_points_in_general_position(L_set2)
     M = matrix([[var for var in vrs[i:i + 4]] for i in range(0, 15, 4)])
     
     # for each point P_i in the base five points, we want P_i*M = P_i'
-    system = matrix([base_five_points[i] for i in range(5)]) * M
+    system = matrix([points1[i] for i in range(5)]) * M
     b = diagonal_matrix(vrs[-5:]) * matrix(points2[i] for i in range(5))
     eqn = system - b
     sol = solve_linear_system_in_fraction_field(eqn.list(), vrs[0:20], [vrs[-1]])
