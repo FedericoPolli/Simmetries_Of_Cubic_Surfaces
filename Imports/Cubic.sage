@@ -91,7 +91,7 @@ class Cubic:
                 new_lines.append(line1)
         return new_lines
 
-    #
+    # TBD, it is used to intersect cubic with pencil of planes
     def _find_lines_when_first_parameter_is_nonzero(self, line):
         conic, plane = self._define_equations(line, 0)
         P = self.P
@@ -115,7 +115,7 @@ class Cubic:
             new_lines.append(Line([non_param_plane, factors[1]]))
         return new_lines
 
-    #
+    # TBD, it is used to intersect cubic with pencil of planes
     def _find_lines_when_first_parameter_is_zero(self, line):
         conic, plane = self._define_equations(line, 1)
         P = self.P
@@ -134,7 +134,7 @@ class Cubic:
                 continue
         return new_lines
 
-    #
+    # TBD, it is used to intersect cubic with pencil of planes
     def _define_equations(self, line, k):
         plane = line.planes[0] * self.P.gens()[-2] + line.planes[1] * self.P.gens()[-1]
         var = line.planes[k].variables()[0]
