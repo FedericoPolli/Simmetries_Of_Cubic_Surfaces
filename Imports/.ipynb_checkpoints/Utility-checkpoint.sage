@@ -305,3 +305,7 @@ def from_labels_to_perm(labels):
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     return Permutation([labels.index(label)+1 for label in keys]).to_permutation_group_element()
 
+def are_cubic_same(cubic1, cubic2):
+    mon = (sum(cubic1.P.gens()[0:4]) ^ 3).monomials()
+    coeffs = matrix([[cubic1.eqn.coefficient(mn) for mn in mon], [cubic2.eqn.coefficient(mn) for mn in mon]]).minors(2)
+    return list(set(coeffs)) == [0]

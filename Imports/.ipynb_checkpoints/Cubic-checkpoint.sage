@@ -57,6 +57,7 @@ class Cubic:
         #multiply by denominator^2 to avoid missing singular factors
         sing_locus = (self.P(sing_subs * (sing_subs.denominator()) ^ 2)).factor()
         eqn = remove_sing_factors(self.P(self.eqn.subs(sost).numerator()), sing_locus)
+        eqn = eqn/(eqn.factor().unit())
         cl_lines = {key: value.subs(sost) for key, value in self.cl_lines.items()} #calls Line.subs()
         lines = list(cl_lines.values())    #to improve performance avoid resubbing
         tritangent_planes = [pl.update_with_sostitution(sost, cl_lines, sing_locus) for pl in self.tritangent_planes]
@@ -349,3 +350,8 @@ class Cubic:
             new_indices.append(self.lines.index(self.lines[i].apply_proj(proj)) + 1)
         return new_indices
 
+    def coefficients():
+        return eqn.coefficients()
+    
+    def coefficient(var):
+        return eqn.coefficient(var)
