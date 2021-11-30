@@ -350,8 +350,8 @@ class Cubic:
             new_indices.append(self.lines.index(self.lines[i].apply_proj(proj)) + 1)
         return new_indices
 
-    def coefficients():
-        return eqn.coefficients()
+    def coefficients(self):
+        return self.eqn.coefficients()
     
-    def coefficient(var):
-        return eqn.coefficient(var)
+    def coefficient(self, var):
+        return self.eqn.coefficient(var)
