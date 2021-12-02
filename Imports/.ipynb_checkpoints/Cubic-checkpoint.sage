@@ -4,7 +4,7 @@ import multiprocessing as mp
 
 
 class Cubic:
-    def __init__(self, eqn, line, sing_locus, lines=None, cl_lines=None, tritangent_planes=None):
+    def __init__(self, eqn, line, sing_locus, lines=None, cl_lines=None, tritangent_planes=None, eck_points=None):
         self.eqn = eqn
         self.P = eqn.parent()
         
@@ -25,7 +25,10 @@ class Cubic:
             self.cl_lines = cl_lines
             self.tritangent_planes = tritangent_planes
             
-        self.eckardt_points = [pl.find_eckardt_point() for pl in self.tritangent_planes if pl.has_eckardt_point()]
+        if eck_points is not None:
+            self.eckardt_points = eck_points
+        else:
+            self.eckardt_points = [pl.find_eckardt_point() for pl in self.tritangent_planes if pl.has_eckardt_point()]   
         self.eckardt_points_labels = [pl.labels for pl in self.tritangent_planes if pl.has_eckardt_point()]
  
     # creates and populates all the 45 tritangent planes
@@ -49,6 +52,19 @@ class Cubic:
     def __repr_html__(self):
         return self.eqn.__repr_html__()
 
+    def reduce(self, ideal):
+        sing_locus = ideal.reduce(self.sing_locus.value()).factor()
+        if sing_locus == 0:
+            raise ValueError('Cubic is singular')
+        eqn = ideal.reduce(self.eqn)
+        eqn = remove_sing_factors(eqn, sing_locus)
+        eqn = eqn/(eqn.factor().unit())
+        cl_lines = {key:line.reduce(ideal) for key, line in self.cl_lines.items()}
+        lines = list(cl_lines.values())
+        tritangent_planes = [pl.reduce(ideal, cl_lines, sing_locus) for pl in self.tritangent_planes]
+        eck_points = [pl.reduce(ideal) for pl in self.eckardt_points]
+        return Cubic(eqn, lines[0], sing_locus, lines, cl_lines, tritangent_planes, eck_points) 
+        
     #update with sostitution all members of the class
     def subs(self, sost):
         sing_subs = self.sing_locus.value().subs(sost)

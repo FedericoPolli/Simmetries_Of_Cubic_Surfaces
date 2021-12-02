@@ -19,7 +19,20 @@ class Line:
         if isinstance(other_line, Line):
             return self.plucker == other_line.plucker
         return False
-
+    
+    def reduce(self, ideal):
+        plucker = Point(self.plucker.reduce(ideal))
+        planes = [ideal.reduce(plane) for plane in self.planes]
+        # if substituted planes coincide, need to calculate new ones.
+        if matrix([plane_coefficients(plane) for plane in planes]).minors(2) == [0 for _ in range(6)]:
+            planes = get_two_planes_containing_line(plucker)   
+        
+        points = [pl.reduce(ideal) for pl in self.points]
+        if points[0] == points[1]:
+            return Line(planes)  # if substituted points coincide, let Line constructor calculate new ones.
+        return Line(planes, points, plucker)
+    
+    
     def subs(self, sost):
         plucker = vector([pl.subs(sost) for pl in self.plucker])
         plucker = Point([self.P(el) for el in plucker * plucker.denominator()])

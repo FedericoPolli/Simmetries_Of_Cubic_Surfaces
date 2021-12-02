@@ -11,6 +11,15 @@ class TritangentPlane:
         else:
             self.conditions = conditions
     
+    def reduce(self, ideal, cl_lines, sing_locus):
+        plane = ideal.reduce(self.plane)
+        lines_dict = {key:cl_lines[key] for key in self.labels}
+        conditions = ideal.reduce(self.conditions)
+        if conditions != 0:
+            conditions = remove_sing_factors(conditions, sing_locus)
+        return TritangentPlane(plane, lines_dict, sing_locus, conditions)    
+    
+    
     #equivalent to subs basically, but I pass the classified lines 
     #already substituted (in Cubic.subs() which calls this method)
     #and the sing locus already factored to speedup computations.
@@ -51,7 +60,7 @@ class TritangentPlane:
     
     def find_eckardt_point(self):
         if self.has_eckardt_point():
-            return self.lines[1].intersection_point(self.lines[2])
+            return self.lines[0].intersection_point(self.lines[1])
         else:
             raise ValueError('Conditions are not 0')
 

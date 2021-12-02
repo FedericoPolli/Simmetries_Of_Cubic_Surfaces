@@ -309,3 +309,8 @@ def are_cubics_same(cubic1, cubic2):
     mon = (sum(cubic1.P.gens()[0:4]) ^ 3).monomials()
     coeffs = matrix([[cubic1.coefficient(mn) for mn in mon], [cubic2.coefficient(mn) for mn in mon]]).minors(2)
     return list(set(coeffs)) == [0]
+
+def get_permuted_L_set(perm):
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    labels = from_perm_to_labels(perm)
+    return [labels[keys.index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3']]

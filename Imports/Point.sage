@@ -22,6 +22,10 @@ class Point:
         else:
             self.components = temp
     
+    def reduce(self, ideal):
+        return Point([ideal.reduce(el) for el in self.components])
+    
+    
     #returns a new Point where each component has the new substitution
     def subs(self, sost):
         components = vector([comp.subs(sost)for comp in self.components])
