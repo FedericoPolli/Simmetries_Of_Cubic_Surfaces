@@ -178,27 +178,17 @@ def get_five_points_in_general_position(L_set):
     return A, B, C, E, Q
 
 
-def get_two_planes_containing_line(line_in_plucker):
-    dpl = get_dual_plucker_coordinates(line_in_plucker)
-    P = line_in_plucker[0].parent()
-    vrs = vector(P.gens()[0:4])
-    eqns = [vector([0, -dpl[0], -dpl[1], -dpl[2]]),
-            vector([dpl[0], 0, dpl[5], -dpl[4]]),
-            vector([dpl[1], dpl[5], 0, -dpl[3]]),
-            vector([dpl[2], -dpl[4], dpl[3], 0])]
-    planes = [eqn.dot_product(vrs) for eqn in eqns if eqn.dot_product(vrs) != 0]
-    coeff1 = vector(plane_coefficients(planes[0]))
-    for plane in planes[1:]:
+def get_two_planes_containing_line(point1, point2):
+    P = point1.parent()
+    vrs = P.gens()[0:4]
+    possible_planes = [el for el in matrix([point1, point2, vrs]).minors(3) if el !=0]
+    plane1 = possible_planes[0]
+    coeff1 = vector(plane_coefficients(plane1))
+    for plane in possible_planes[1:]:
         coeff2 = vector(plane_coefficients(plane))
         if not are_vectors_proportional(coeff1, coeff2):
-            return [planes[0], plane]
+            return [plane1, plane]
     return None
-
-# p01, p02, p03, p23, p31, p12
-def get_dual_plucker_coordinates(pl):
-    d = list(pl[0:3])
-    m = [pl[5], -pl[4], pl[3]]
-    return m + d
 
 
 def solve_linear_system_in_fraction_field(eqns, variables, param):

@@ -10,10 +10,10 @@ class Line:
             self.plucker = plucker
 
     def __str__(self):
-        return self.plucker.__str__() + ' ' + self.planes.__str__()
+        return self.plucker.__str__()
 
     def __repr__(self):
-        return self.plucker.__repr__() + ' ' + self.planes.__repr__()
+        return self.plucker.__repr__()
 
     def __eq__(self, other_line):
         if isinstance(other_line, Line):
