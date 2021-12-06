@@ -177,7 +177,6 @@ def get_five_points_in_general_position(L_set):
     Q = line_P_D.intersection_point(L_set[4])
     return A, B, C, E, Q
 
-
 def get_two_planes_containing_line(point1, point2):
     P = point1.parent()
     vrs = P.gens()[0:4]

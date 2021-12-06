@@ -22,29 +22,28 @@ class Line:
     
     def reduce(self, ideal):
         plucker = Point(self.plucker.reduce(ideal))
+        
+        points = self.get_points_from_plucker(plucker)
+        
         planes = [ideal.reduce(plane) for plane in self.planes]
         # if substituted planes coincide, need to calculate new ones.
         if matrix([plane_coefficients(plane) for plane in planes]).minors(2) == [0 for _ in range(6)]:
-            planes = get_two_planes_containing_line(plucker)   
+            planes = get_two_planes_containing_line(points[0], points[1])   
         
-        points = [pl.reduce(ideal) for pl in self.points]
-        if points[0] == points[1]:
-            return Line(planes)  # if substituted points coincide, let Line constructor calculate new ones.
         return Line(planes, points, plucker)
     
     
     def subs(self, sost):
         plucker = vector([pl.subs(sost) for pl in self.plucker])
         plucker = Point([self.P(el) for el in plucker * plucker.denominator()])
+        
+        points = self.get_points_from_plucker(plucker)
 
         planes = [self.P(pl.subs(sost).numerator()) for pl in self.planes]
         # if substituted planes coincide, need to calculate new ones.
         if matrix([plane_coefficients(plane) for plane in planes]).minors(2) == [0 for _ in range(6)]:
-            planes = get_two_planes_containing_line(plucker)
+            planes = get_two_planes_containing_line(points[0], points[1])
 
-        points = [pl.subs(sost) for pl in self.points]
-        if points[0] == points[1]:
-            return Line(planes)  # if substituted points coincide, let Line constructor calculate new ones.
         return Line(planes, points, plucker)
 
     # Starting from the planes containing this line, it finds two point on the line.
@@ -131,3 +130,18 @@ class Line:
             if plane.subs({vrs[i]: point[i] for i in range(4)}) != 0:
                 return False
         return True
+
+    def get_points_from_plucker(self, pl = None):
+        if pl is None:
+            pl = self.plucker
+        zero = self.P(0)
+        M = [[zero, pl[0], pl[1], pl[2]],
+             [-pl[0], zero, pl[3], pl[4]],
+             [-pl[1], -pl[3], zero, pl[5]],
+             [-pl[2], -pl[4], -pl[5], zero]]
+        points = [Point(el) for el in M if el != [zero for _ in range(4)]]
+        point1 = points[0]
+        for point in points[1:]:
+            if point != point1:
+                return [point1, point]
+        return None

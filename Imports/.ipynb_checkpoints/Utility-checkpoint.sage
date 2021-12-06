@@ -177,6 +177,17 @@ def get_five_points_in_general_position(L_set):
     Q = line_P_D.intersection_point(L_set[4])
     return A, B, C, E, Q
 
+def get_points_from_plucker(pl):
+    M = [[0, pl[0], pl[1], pl[2]]
+         [-pl[0], 0, pl[3], pl[4]]
+         [-pl[1], -pl[3], 0, pl[5]]
+         [-pl[2], -pl[4], -pl[5], 0]]
+    points = [Point(el) for el in M if el != [0,0,0,0]]
+    point1 = points[0]
+    for point in points[1:]:
+        if point != point1:
+            return point1, point
+    return None
 
 def get_two_planes_containing_line(point1, point2):
     P = point1.parent()
