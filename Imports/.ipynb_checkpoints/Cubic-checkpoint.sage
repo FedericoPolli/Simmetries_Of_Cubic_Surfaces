@@ -16,8 +16,8 @@ class Cubic:
             
         # if no parameters passed calculate everything
         if lines is None or cl_lines is None or tritangent_planes is None:
-            self.lines = self.find_all_lines_on_cubic_surface(line)
-            self.cl_lines = self.classify_lines_on_cubic_surface()
+            self.lines = self.find_all_lines(line)
+            self.cl_lines = self.classify_lines()
             self.lines = list(self.cl_lines.values())  #redefine self.lines in accordance with subs method
             self.tritangent_planes = self.find_tritangent_planes()
         else:
@@ -84,7 +84,7 @@ class Cubic:
 
 # Finding lines ------------------------------------------------------------------------------------
     
-    def find_all_lines_on_cubic_surface(self, line):
+    def find_all_lines(self, line):
         all_lines = [line]
         for i in range(3):
             all_lines += self._get_new_lines_on_cubic_surface(all_lines[i], all_lines)
@@ -167,7 +167,7 @@ class Cubic:
 # Classify lines ------------------------------------------------------------------------------------
 
     # classifies the lines as E, G, F
-    def classify_lines_on_cubic_surface(self):
+    def classify_lines(self):
         E = self._find_E()
         G = self._find_G(E, [line for line in self.lines if line not in E])
         F = self._find_F(E, [line for line in self.lines if line not in E and line not in G])

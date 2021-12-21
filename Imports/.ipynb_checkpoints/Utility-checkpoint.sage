@@ -177,18 +177,6 @@ def get_five_points_in_general_position(L_set):
     Q = line_P_D.intersection_point(L_set[4])
     return A, B, C, E, Q
 
-def get_points_from_plucker(pl):
-    M = [[0, pl[0], pl[1], pl[2]]
-         [-pl[0], 0, pl[3], pl[4]]
-         [-pl[1], -pl[3], 0, pl[5]]
-         [-pl[2], -pl[4], -pl[5], 0]]
-    points = [Point(el) for el in M if el != [0,0,0,0]]
-    point1 = points[0]
-    for point in points[1:]:
-        if point != point1:
-            return point1, point
-    return None
-
 def get_two_planes_containing_line(point1, point2):
     P = point1.parent()
     vrs = P.gens()[0:4]
@@ -314,4 +302,9 @@ def are_cubics_same(cubic1, cubic2):
 def get_permuted_L_set(perm):
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     labels = from_perm_to_labels(perm)
-    return [labels[keys.index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3']]
+    return tuple(labels[keys.index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3'])
+
+def get_permuted_extended_L_set(perm):
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    labels = from_perm_to_labels(perm)
+    return tuple(labels[keys.index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3', 'E5'])
