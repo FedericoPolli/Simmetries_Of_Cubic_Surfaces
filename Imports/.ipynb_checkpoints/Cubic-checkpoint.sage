@@ -53,9 +53,10 @@ class Cubic:
         return self.eqn.__repr_html__()
 
     def reduce(self, ideal):
-        sing_locus = ideal.reduce(self.sing_locus.value()).factor()
+        sing_locus = ideal.reduce(self.sing_locus.value())
         if sing_locus == 0:
             raise ValueError('Cubic is singular')
+        sing_locus = sing_locus.factor()
         eqn = ideal.reduce(self.eqn)
         eqn = remove_sing_factors(eqn, sing_locus)
         eqn = eqn/(eqn.factor().unit())
@@ -250,7 +251,7 @@ class Cubic:
     def get_L_set_in_plucker(self, L_set):
         return tuple(map(lambda uu: self.cl_lines[uu], L_set))
 
-    # finds all the projectivities from the ginve L-sets in parallel
+    # finds all the projectivities from the given L-sets in parallel
     def find_all_proj_parallel(self, all_L_sets):
         if os.name == "nt":
             mp.freeze_support()
@@ -294,12 +295,19 @@ class Cubic:
     def find_simmetry(self, proj):
         sost = change_coord(proj)
         new_cubic = self.eqn.subs(sost)
-        mon = (sum(self.P.gens()[0:4]) ^ 3).monomials()
-        coeffs = matrix([[self.eqn.coefficient(mn) for mn in mon], [new_cubic.coefficient(mn) for mn in mon]]).minors(2)
-        if coeffs == [0 for _ in range(len(coeffs))]:
+        if self.are_cubics_same(new_cubic):
             return proj
         else:
             return None
+
+    def are_cubics_same(self, other):
+        mon = (sum(self.P.gens()[0:4]) ^ 3).monomials()
+        coeffs = matrix([[self.coefficient(mn) for mn in mon], [other.coefficient(mn) for mn in mon]]).minors(2)
+        for el in coeffs:
+            if el !=0:
+                return False
+        return True
+
 
 #--------------------------------------------------------------------------------------------------
     
@@ -325,7 +333,7 @@ class Cubic:
     
     # studies the projectivities which do not send this cubic to itself in general to try to find
     # values for the parameters for which some of these projectivities become simmetries
-    def find_conditions_for_subfamilies(self, projectivities, simmetries):
+    def find_conditions_for_subfamilies(self, projectivities, simmetries=[]):
         vrs = self.P.gens()[0:4]
         mon = (sum(vrs) ^ 3).monomials()
         conditions = []
@@ -336,10 +344,8 @@ class Cubic:
                 matrix([[new_cubic.coefficient(mn) for mn in mon], [self.eqn.coefficient(mn) for mn in mon]]).minors(2)))
             minor = [remove_sing_factors(el, self.sing_locus) for el in minor if el != 0]
             prim_deco = self.P.ideal(minor).radical().primary_decomposition()
-            for ideale in prim_deco:
-                if self.is_ideal_valid(ideale):
-                    conditions.append(ideale.gens())
-        return list(set(conditions))
+            conditions+=[ideale.gens() for ideale in prim_deco if self.is_ideal_valid(ideale)]
+        return conditions
 
     # check if ideal does not contain singular locus and  if it does not contain
     # polynomials which would cause this cubic to have more eckardt points
@@ -351,7 +357,7 @@ class Cubic:
                 return False
         return True
  
-    # applies simmetriy to eckardt points and returns the associated permutation
+    # applies simmetry to eckardt points and returns the associated permutation
     def apply_proj_to_eck(self, proj):
         new_indices = []
         eck = self.eckardt_points

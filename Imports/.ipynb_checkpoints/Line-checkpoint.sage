@@ -28,7 +28,7 @@ class Line:
         planes = [ideal.reduce(plane) for plane in self.planes]
         # if substituted planes coincide, need to calculate new ones.
         if matrix([plane_coefficients(plane) for plane in planes]).minors(2) == [0 for _ in range(6)]:
-            planes = get_two_planes_containing_line(points[0], points[1])   
+            planes = get_two_planes_containing_line(points)   
         
         return Line(planes, points, plucker)
     
@@ -42,7 +42,7 @@ class Line:
         planes = [self.P(pl.subs(sost).numerator()) for pl in self.planes]
         # if substituted planes coincide, need to calculate new ones.
         if matrix([plane_coefficients(plane) for plane in planes]).minors(2) == [0 for _ in range(6)]:
-            planes = get_two_planes_containing_line(points[0], points[1])
+            planes = get_two_planes_containing_line(points)
 
         return Line(planes, points, plucker)
 

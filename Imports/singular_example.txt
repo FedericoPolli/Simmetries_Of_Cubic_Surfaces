@@ -1,0 +1,14 @@
+   /**
+    * Welcome to Singular online!
+    * In this window you may type in Singular commands 
+    * and have them evaluated by the server.
+    * 
+    * Evaluate a line or selection by typing Shift+Enter 
+    * or by clicking on Evaluate.
+    * 
+    * Here are some sample commands: */
+    **/
+ring r = (0,i),(x,y,z,t,b,c,d,e,f),dp; minpoly = i^2+1;
+poly pol = (-4*i - 2)*z*c^4*f + (-2*i - 1)*t*c^4*f + (-2*i - 1)*x*c^3*f^2 + (4*i + 2)*y*c^3*f^2 + (4*i)*z*c^3*f^2 - t*c^3*f^2 - x*c^2*f^3 + (-4*i)*y*c^2*f^3 + 2*z*c^2*f^3 + (2*i + 1)*t*c^2*f^3 + (2*i + 1)*x*c*f^4 - 2*y*c*f^4 + t*c*f^4 + x*f^5;
+factorize(pol/(5*c + (-2*i + 1)*f));
+factorize(pol);

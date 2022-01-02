@@ -17,8 +17,7 @@ def find_conic_discriminant(conic):
 # l1, l3, l5 are skew, l2 meets l1, l3, l5 while l4 meets l1 and l3.
 def find_all_L_sets():
     all_L_sets = []
-    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
-            'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16','F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     for key1 in keys:
         incident_1 = set(get_incident_keys(key1))
         non_incident_1 = set(get_non_incident_keys(key1))
@@ -177,7 +176,9 @@ def get_five_points_in_general_position(L_set):
     Q = line_P_D.intersection_point(L_set[4])
     return A, B, C, E, Q
 
-def get_two_planes_containing_line(point1, point2):
+def get_two_planes_containing_line(points):
+    point1 = points[0]
+    point2 = points[1]
     P = point1.parent()
     vrs = P.gens()[0:4]
     possible_planes = [el for el in matrix([point1, point2, vrs]).minors(3) if el !=0]
@@ -285,19 +286,13 @@ def change_coord(proj):
 
 #given a permutation of the 27 lines, returns the associated permuted labels
 def from_perm_to_labels(perm):
-    labels = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
-            'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    labels = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16','F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     return [labels[perm.dict()[key] - 1] for key in perm.dict()]
   
 #given the permuted labels, returns a permutation group element
 def from_labels_to_perm(labels):
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     return Permutation([labels.index(label)+1 for label in keys]).to_permutation_group_element()
-
-def are_cubics_same(cubic1, cubic2):
-    mon = (sum(cubic1.P.gens()[0:4]) ^ 3).monomials()
-    coeffs = matrix([[cubic1.coefficient(mn) for mn in mon], [cubic2.coefficient(mn) for mn in mon]]).minors(2)
-    return list(set(coeffs)) == [0]
 
 def get_permuted_L_set(perm):
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
