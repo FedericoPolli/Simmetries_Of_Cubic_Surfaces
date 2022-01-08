@@ -5,6 +5,8 @@ class Point:
     """
 
     def __init__(self, components):
+        if list(set(components)) == [0]:
+            raise ValueError(str(components)+" is not a projective point")
         self._poly_ring = components[0].parent()
         mcd = gcd(components)
         #divide each component by gcd with exact division
@@ -12,7 +14,10 @@ class Point:
         
         # calculate the gcd of the coefficients of each component
         #  as gcd of polynomials returns 1 as coefficient
-        temp = temp/gcd([gcd(el.coefficients()) for el in temp])
+        try:
+            temp = temp/gcd([gcd(el.coefficients()) for el in temp])
+        except Exception:
+            pass
         
         #make it so that the first element is positive 
         # (helps in determining the plucker coordinates of
@@ -28,7 +33,7 @@ class Point:
     
     #returns a new Point where each component has the new substitution
     def subs(self, sost):
-        components = vector([comp.subs(sost)for comp in self.components])
+        components = vector([comp.subs(sost) for comp in self.components])
         #do not want to work in fraction fields
         return Point([self._poly_ring(el) for el in components * components.denominator()])
     
@@ -61,6 +66,15 @@ class Point:
         
     def __rmul__(self, other):
         return Point(other * self.components)
+    
+    def __div__(self, other):
+        return Point(self.components/other)
+    
+    def __add__(self, other):
+        return Point(self.components + other._components)
+    
+    def __sub__(self, other):
+        return Point(self.components - other._components)
         
     def parent(self):
         return self._poly_ring

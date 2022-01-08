@@ -352,7 +352,7 @@ class Cubic:
     def is_ideal_valid(self, ideal):
         if self.sing_locus.value() in ideal:
             return False
-        for poly in list(set([pl.conditions for pl in self.tritangent_planes if pl.conditions != 0])):
+        for poly in list(set([pl.condition for pl in self.tritangent_planes if pl.condition != 0])):
             if poly in ideal:
                 return False
         return True

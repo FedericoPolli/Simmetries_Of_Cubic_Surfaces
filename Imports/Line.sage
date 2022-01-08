@@ -19,29 +19,23 @@ class Line:
         if isinstance(other_line, Line):
             return self.plucker == other_line.plucker
         return False
-    
+
     def reduce(self, ideal):
-        plucker = Point(self.plucker.reduce(ideal))
-        
+        plucker = self.plucker.reduce(ideal)
         points = self.get_points_from_plucker(plucker)
-        
         planes = [ideal.reduce(plane) for plane in self.planes]
         # if substituted planes coincide, need to calculate new ones.
-        if matrix([plane_coefficients(plane) for plane in planes]).minors(2) == [0 for _ in range(6)]:
-            planes = get_two_planes_containing_line(points)   
-        
-        return Line(planes, points, plucker)
-    
-    
-    def subs(self, sost):
-        plucker = vector([pl.subs(sost) for pl in self.plucker])
-        plucker = Point([self.P(el) for el in plucker * plucker.denominator()])
-        
-        points = self.get_points_from_plucker(plucker)
+        if set(matrix([plane_coefficients(plane) for plane in planes]).minors(2)) == {0}:
+            planes = get_two_planes_containing_line(points)
 
+        return Line(planes, points, plucker)
+
+    def subs(self, sost):
+        plucker = self.plucker.subs(sost)
+        points = self.get_points_from_plucker(plucker)
         planes = [self.P(pl.subs(sost).numerator()) for pl in self.planes]
         # if substituted planes coincide, need to calculate new ones.
-        if matrix([plane_coefficients(plane) for plane in planes]).minors(2) == [0 for _ in range(6)]:
+        if set(matrix([plane_coefficients(plane) for plane in planes]).minors(2)) == {0}:
             planes = get_two_planes_containing_line(points)
 
         return Line(planes, points, plucker)
@@ -50,13 +44,10 @@ class Line:
     # It finds a nonzero minor, as well as the two variables associated to it. Then it
     # finds the points by expressing these two variables as a function of the other two,
     # which become parameters, and substituting ad hoc values to the two parameters.
-    # This could probably be simplified by directly calculating plucker coordinates
-    # from the planes and then the points from the plucker coordinates.
     def get_two_points_on_line(self):
         vr = self.P.gens()
         M = matrix([plane_coefficients(plane) for plane in self.planes])
-        minors = M.minors(2)
-        index = next(i[0] for i in enumerate(minors) if i[1] != 0)  # find first nonzero minor
+        index = next(i[0] for i in enumerate(M.minors(2)) if i[1] != 0)  # find first nonzero minor
         possible_columns = {0: (0, 1), 1: (0, 2), 2: (0, 3), 3: (1, 2), 4: (1, 3), 5: (2, 3)}
         vars_indices = possible_columns.get(index)
         param_indices = tuple({0, 1, 2, 3} - set(vars_indices))
@@ -131,7 +122,7 @@ class Line:
                 return False
         return True
 
-    def get_points_from_plucker(self, pl = None):
+    def get_points_from_plucker(self, pl=None):
         if pl is None:
             pl = self.plucker
         zero = self.P(0)
@@ -139,9 +130,9 @@ class Line:
              [-pl[0], zero, pl[3], pl[4]],
              [-pl[1], -pl[3], zero, pl[5]],
              [-pl[2], -pl[4], -pl[5], zero]]
-        points = [Point(el) for el in M if el != [zero for _ in range(4)]]
+        points = [Point(el) for el in M if set(el) != {0}]
         point1 = points[0]
         for point in points[1:]:
             if point != point1:
                 return [point1, point]
-        return None
+        raise ValueError("Could not find two distinct points")

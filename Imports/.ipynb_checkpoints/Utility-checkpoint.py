@@ -344,7 +344,7 @@ def find_conditions_for_subfamilies(cubic, projectivities, simmetries):
 def is_ideal_valid(ideal, cubic, sing_cubics):
     if sing_cubics in ideal:
         return False
-    for poly in list(set([pl.conditions for pl in cubic.tritangent_planes if pl.conditions !=0])):
+    for poly in list(set([pl.condition for pl in cubic.tritangent_planes if pl.condition != 0])):
         if poly in ideal:
             return False
     return True    

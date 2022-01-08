@@ -37,7 +37,7 @@ class TritangentPlane:
             return self.lines_dict == other.lines_dict
         return False
     
-    # conditions are obtained by imposing that the three lines meet in a single point.
+    # condition are obtained by imposing that the three lines meet in a single point.
     def find_conditions_for_eckardt_point(self):
         P1 = self.lines[0].intersection_point(self.lines[1])
         P2 = self.lines[1].intersection_point(self.lines[2])
