@@ -13,11 +13,13 @@ def find_conic_discriminant(conic):
     ])
     return discriminant_matrix.det().factor()
 
-# An L_set is a quintuple (l1, l2, l3, l4, l5) where 
+
+# An L_set is a quintuple (l1, l2, l3, l4, l5) where
 # l1, l3, l5 are skew, l2 meets l1, l3, l5 while l4 meets l1 and l3.
 def find_all_L_sets():
     all_L_sets = []
-    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16','F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
+            'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     for key1 in keys:
         incident_1 = set(get_incident_keys(key1))
         non_incident_1 = set(get_non_incident_keys(key1))
@@ -87,8 +89,9 @@ def get_incident_keys(key):
                           if len({i + 1, j + 1, index1, index2}) == 4]
     return incident_keys
 
+
 # six mutually skew lines are enough to determine a permutation. It finds all the possible
-# sets of 6 mutually skew lines E_1, ..., E_6 and then computes the correspondnig G_i and F_ij
+# sets of 6 mutually skew lines E_1, ..., E_6 and then computes the corresponding G_i and F_ij
 def find_all_permutations():
     all_perm = []
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
@@ -115,8 +118,8 @@ def find_all_permutations():
                             non_incident = [non_in_1, non_in_2, non_in_3, non_in_4, non_in_5, non_in_6]
                             incident = [in_1, in_2, in_3, in_4, in_5, in_6]
                             E = [key1, key2, key3, key4, key5, key6]
-                            
-                            #G_i is the unique line meeting all E_j except E_i
+
+                            # G_i is the unique line meeting all E_j except E_i
                             G = []
                             for i in range(6):
                                 s = set([key for key in keys if key not in E])
@@ -126,8 +129,8 @@ def find_all_permutations():
                                     else:
                                         s.intersection_update(non_incident[j])
                                 G.append(list(s)[0])
-                                
-                            #F_ij is the unique line meeting E_i, E_j but not the other E_k
+
+                            # F_ij is the unique line meeting E_i, E_j but not the other E_k
                             F = []
                             for i in range(5):
                                 for j in range(i + 1, 6):
@@ -156,8 +159,7 @@ def find_all_triplets_of_coplanar_lines():
                 for m in range(2, 6):
                     for n in range(3, 7):
                         if k < l and m < n and k < n and {j, k, l, m, n} == {2, 3, 4, 5, 6}:
-                            if ['F' + str(1) + str(j), 'F' + str(m) + str(n),
-                                'F' + str(k) + str(l)] not in all_triplets:
+                            if ['F' + str(1) + str(j), 'F' + str(m) + str(n), 'F' + str(k) + str(l)] not in all_triplets:
                                 all_triplets.append(
                                     ['F' + str(1) + str(j), 'F' + str(k) + str(l), 'F' + str(m) + str(n)])
     return all_triplets
@@ -176,12 +178,13 @@ def get_five_points_in_general_position(L_set):
     Q = line_P_D.intersection_point(L_set[4])
     return A, B, C, E, Q
 
+
 def get_two_planes_containing_line(points):
     point1 = points[0]
     point2 = points[1]
     P = point1.parent()
     vrs = P.gens()[0:4]
-    possible_planes = [el for el in matrix([point1, point2, vrs]).minors(3) if el !=0]
+    possible_planes = [el for el in matrix([point1, point2, vrs]).minors(3) if el != 0]
     plane1 = possible_planes[0]
     coeff1 = vector(plane_coefficients(plane1))
     for plane in possible_planes[1:]:
@@ -201,28 +204,28 @@ def solve_linear_system_in_fraction_field(eqns, variables, param):
 # maybe should be moved to cubic.sage
 def find_projectivity(L_set1, L_set2):
     P = L_set2[0].P
-    S = PolynomialRing(P.base_ring(), 21, 'v')  #build new polynomial ring with the variables needed
+    S = PolynomialRing(P.base_ring(), 21, 'v')  # build new polynomial ring with the variables needed
     SS = PolynomialRing(P.base_ring(), P.gens() + S.gens())
     vrs = SS.gens()[-21:]
     points1 = get_five_points_in_general_position(L_set1)
     points2 = get_five_points_in_general_position(L_set2)
     M = matrix([[var for var in vrs[i:i + 4]] for i in range(0, 15, 4)])
-    
+
     # for each point P_i in the base five points, we want P_i*M = P_i'
     system = matrix([points1[i] for i in range(5)]) * M
     b = diagonal_matrix(vrs[-5:]) * matrix(points2[i] for i in range(5))
     eqn = system - b
     sol = solve_linear_system_in_fraction_field(eqn.list(), vrs[0:20], [vrs[-1]])
-    
-    #recast solution in polynomial ring
+
+    # recast solution in polynomial ring
     sol = sol * sol.denominator()
     sol = [SS(el) for el in sol.list()]
     sost = {vrs[i]: sol[i] for i in range(16)}
-    
+
     # get actual matrix without the added variables 
     proj = M.subs(sost).subs({SS.gens()[-1]: 1})
-    
-    #simplify matrix
+
+    # simplify matrix
     proj = (proj / gcd(proj.list())).list()
     proj = matrix([[P(el) for el in proj[i:i + 4]] for i in range(0, 15, 4)])
     proj = proj / gcd(gcd(proj.coefficients()[i].coefficients()) for i in range(len(proj.coefficients())))
@@ -264,7 +267,8 @@ def solve_linear_system(eqns, variables, param):
     sol = A.adjugate() * b
     return [sol[i, 0] for i in range(len(variables))] + [det(A) * par for par in param]
 
-# removes singular factors from polynomial by checking each factor 
+
+# removes singular factors from polynomial by checking each factor
 # of the singular locus against the polynomial
 # sing_locus is a Factorization object
 def remove_sing_factors(poly, sing_locus):
@@ -278,28 +282,37 @@ def remove_sing_factors(poly, sing_locus):
             product = product * factor ^ poly_powers[poly_factors.index(factor)]
     return poly // product
 
-#return a dictionary with the coordinate change associated to the projectivity
-def change_coord(proj):
+
+# return a dictionary with the coordinate change associated to the projectivity
+def change_coordinates(proj):
     vrs = proj.base_ring().gens()[0:4]
     coordinate_change = vector(vrs) * proj
     return {vrs[i]: coordinate_change[i] for i in range(4)}
 
-#given a permutation of the 27 lines, returns the associated permuted labels
+
+# given a permutation of the 27 lines, returns the associated permuted labels
 def from_perm_to_labels(perm):
-    labels = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16','F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    labels = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
+              'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     return [labels[perm.dict()[key] - 1] for key in perm.dict()]
-  
-#given the permuted labels, returns a permutation group element
+
+
+# given the permuted labels, returns a permutation group element
 def from_labels_to_perm(labels):
-    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
-    return Permutation([labels.index(label)+1 for label in keys]).to_permutation_group_element()
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
+            'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    return Permutation([labels.index(label) + 1 for label in keys]).to_permutation_group_element()
+
 
 def get_permuted_L_set(perm):
-    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
+            'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     labels = from_perm_to_labels(perm)
     return tuple(labels[keys.index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3'])
 
+
 def get_permuted_extended_L_set(perm):
-    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16', 'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
+            'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     labels = from_perm_to_labels(perm)
     return tuple(labels[keys.index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3', 'E5'])

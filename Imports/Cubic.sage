@@ -84,15 +84,7 @@ class Cubic:
         possible_new_lines = []
         possible_new_lines += self._find_lines_when_first_parameter_is_nonzero(line)
         possible_new_lines += self._find_lines_when_first_parameter_is_zero(line)
-        new_lines = []
-        for line1 in possible_new_lines:
-            flag = True
-            for line2 in starting_lines:
-                if line1 == line2:
-                    flag = False
-                    break
-            if flag:
-                new_lines.append(line1)
+        new_lines = [line for line in possible_new_lines if line not in starting_lines]
         return new_lines
 
     # TBD, it is used to intersect cubic with pencil of planes
@@ -181,18 +173,13 @@ class Cubic:
                 break
         E = self._get_other_skew_lines([E1, E2, E3, E4])
         # we want E5 to be the line whose last plucker coordinate is divisible by f
-        if self.P.gens()[-3].divides(E[-1].plucker[-1]):
+        if self.P.gens()[8].divides(E[-1].plucker[-1]):
             E[-2], E[-1] = E[-1], E[-2]
         return E
 
     def _get_other_skew_lines(self, skew_lines):
         for line in self.lines:
-            is_line_skew = True
-            for e in skew_lines:
-                if line.are_incident(e):
-                    is_line_skew = False
-                    break
-            if is_line_skew:
+            if True not in [line.are_incident(e) for e in skew_lines]:
                 skew_lines.append(line)
             if len(skew_lines) == 6:  # there are at most 6 skew lines
                 break
@@ -232,6 +219,25 @@ class Cubic:
 
     # Find projectivities -----------------------------------------------------------------------------
 
+    # find the permutations which send the set of this cubic's Eckardt points to itself
+    def find_admissible_permutations(self):
+        with open('all_permutations.pickle', 'rb') as fil:
+            all_permutations = pickle.load(fil)
+        adm_perm = []
+        keys = list(self.cl_lines.keys())
+        labels = [sorted(label) for label in self.eckardt_points_labels]
+        for perm_label in all_permutations:
+            flag = True
+            # check if each permuted label is still in Eckardt points labels
+            for triple in labels:
+                new_triple = [perm_label[keys.index(label)] for label in triple]
+                if sorted(new_triple) not in labels:
+                    flag = False
+                    break
+            if flag is True:
+                adm_perm.append(from_labels_to_perm(perm_label))
+        return adm_perm
+
     # given a list of permutations of the 27 lines, it finds the permuted base L-sets
     # and finds the associated projectivities
     def find_admissible_projectivities(self, adm_perm=None):
@@ -239,7 +245,7 @@ class Cubic:
             adm_perm = self.find_admissible_permutations()
         resulting_L_sets = []
         for perm in adm_perm:
-            perm_L_set = [perm[list(self.cl_lines.keys()).index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3']]
+            perm_L_set = get_permuted_L_set(perm)
             if perm_L_set not in resulting_L_sets:  # avoid duplication
                 resulting_L_sets.append(perm_L_set)
         return self.find_all_proj_parallel(resulting_L_sets)
@@ -253,18 +259,19 @@ class Cubic:
         if os.name == "nt":
             mp.freeze_support()
         pool = mp.Pool(mp.cpu_count() - 1)
-        all_param = ((L_set,) for L_set in all_L_sets)
+        L_set_base = ('E1', 'G4', 'E2', 'G3', 'E3')
+        all_param = ((L_set_base, L_set) for L_set in all_L_sets)
         result = pool.map(self.find_proj_parallel_wrapper, all_param)
         pool.close()
         return result
 
     def find_proj_parallel_wrapper(self, args):
-        return self.find_all_projectivities(*args)
+        return self.find_projectivity(*args)
 
-    def find_all_projectivities(self, L_set):
-        L_set_base = self.get_L_set_in_plucker(['E1', 'G4', 'E2', 'G3', 'E3'])
-        L2 = self.get_L_set_in_plucker(L_set)
-        M = find_projectivity(L_set_base, L2)
+    def find_projectivity(self, L_set1, L_set2):
+        L1 = self.get_L_set_in_plucker(L_set1)
+        L2 = self.get_L_set_in_plucker(L_set2)
+        M = find_projectivity(L1, L2)
         return M
 
     # Find simmetries -------------------------------------------------------------------------------------
@@ -290,7 +297,7 @@ class Cubic:
 
     # check if the list of coefficients of this cubic and the new one are proportional
     def find_simmetry(self, proj):
-        sost = change_coord(proj)
+        sost = change_coordinates(proj)
         new_cubic = self.eqn.subs(sost)
         if self.are_cubics_same(new_cubic):
             return proj
@@ -307,51 +314,46 @@ class Cubic:
 
     # --------------------------------------------------------------------------------------------------
 
-    # find the permutations which send the set of this cubic's Eckardt points to itself
-    def find_admissible_permutations(self):
-        with open('all_permutations.pickle', 'rb') as fil:
-            all_permutations = pickle.load(fil)
-        adm_perm = []
-        keys = list(self.cl_lines.keys())
-        labels = [sorted(label) for label in self.eckardt_points_labels]
-        for perm in all_permutations:
-            flag = True
-            # check if each permuted label is still in Eckardt points labels
-            for triple in labels:
-                new_triple = [perm[keys.index(label)] for label in triple]
-                if sorted(new_triple) not in labels:
-                    flag = False
-                    break
-            if flag is True:
-                adm_perm.append(perm)
-        return adm_perm
+    def find_conditions_on_cubic(self, proj):
+        #change coordinates, obtain new cubic and find conditions on the parameters
+        vrs = self.P.gens()[0:4]
+        mon = (sum(vrs) ^ 3).monomials()
+        sost = change_coordinates(proj)
+        new_cubic = self.eqn.subs(sost)
+        current_conds = matrix([[self.eqn.coefficient(mn) for mn in mon], [new_cubic.coefficient(mn) for mn in mon]]).minors(2)
+        no_sing_conds = [remove_sing_factors(el, self.sing_locus) for el in list(set(current_conds)) if el !=0]
+        return self.P.ideal(no_sing_conds)
+
+    def find_decomposed_conditions_on_cubic(self, proj):
+        ideal = self.find_conditions_on_cubic(proj)
+        return ideal.saturation(self.P.gens()[5])[0].radical().primary_decomposition('gtz')
 
     # studies the projectivities which do not send this cubic to itself in general to try to find
     # values for the parameters for which some of these projectivities become simmetries
     def find_conditions_for_subfamilies(self, projectivities, simmetries=[]):
-        vrs = self.P.gens()[0:4]
-        mon = (sum(vrs) ^ 3).monomials()
         conditions = []
         for M in [proj for proj in projectivities if proj not in simmetries]:
-            sost = change_coord(M)
-            new_cubic = remove_sing_factors(self.eqn.subs(sost), self.sing_locus)
-            minor = list(set(
-                matrix([[new_cubic.coefficient(mn) for mn in mon], [self.eqn.coefficient(mn) for mn in mon]]).minors(
-                    2)))
-            minor = [remove_sing_factors(el, self.sing_locus) for el in minor if el != 0]
-            prim_deco = self.P.ideal(minor).radical().primary_decomposition()
-            conditions += [ideale.gens() for ideale in prim_deco if self.is_ideal_valid(ideale)]
+            prim_deco = self.find_decomposed_conditions_on_cubic(M)
+            conditions += [ideale for ideale in prim_deco if self.is_ideal_valid(ideale)]
         return conditions
 
     # check if ideal does not contain singular locus and  if it does not contain
     # polynomials which would cause this cubic to have more eckardt points
     def is_ideal_valid(self, ideal):
-        if self.sing_locus.value() in ideal:
+        if self.is_ideal_singular(ideal):
             return False
+        if self.does_ideal_give_more_eck_points(ideal):
+            return False
+        return True
+
+    def is_ideal_singular(self, ideal):
+        return self.sing_locus.value() in ideal
+
+    def does_ideal_give_more_eck_points(self, ideal):
         for poly in list(set([pl.condition for pl in self.tritangent_planes if pl.condition != 0])):
             if poly in ideal:
-                return False
-        return True
+                return True
+        return False
 
     # applies simmetry to eckardt points and returns the associated permutation
     def apply_proj_to_eck(self, proj):

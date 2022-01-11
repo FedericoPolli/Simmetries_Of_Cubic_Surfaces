@@ -107,7 +107,7 @@ class Line:
 
     # returns line obtained by applying given projectivity to this line
     def apply_proj(self, proj):
-        sost = change_coord(proj)
+        sost = change_coordinates(proj)
         new_planes = [plane.subs(sost) for plane in self.planes]
         return Line(new_planes)
 
