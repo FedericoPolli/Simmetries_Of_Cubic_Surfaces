@@ -30,6 +30,7 @@ class Cubic:
         else:
             self.eckardt_points = [pl.find_eckardt_point() for pl in self.tritangent_planes if pl.has_eckardt_point()]
         self.eckardt_points_labels = [pl.labels for pl in self.tritangent_planes if pl.has_eckardt_point()]
+        self.L_set_base = ('E1', 'G4', 'E2', 'G3', 'E3')
 
     def __str__(self):
         return self.eqn.__str__()
@@ -58,9 +59,9 @@ class Cubic:
     def subs(self, sost):
         sing_subs = self.sing_locus.value().subs(sost)
         if sing_subs == 0:
-            raise ValueError('Cubic is singular')
+            raise ValueError('Cubic is singular')    
         # multiply by denominator^2 to avoid missing singular factors
-        sing_locus = (self.P(sing_subs * (sing_subs.denominator()) ^ 2)).factor()
+        sing_locus = (self.P(sing_subs * (sing_subs.denominator()) ^ 2)).factor().radical()
         eqn = remove_sing_factors(self.P(self.eqn.subs(sost).numerator()), sing_locus)
         eqn = eqn / (eqn.factor().unit())
         cl_lines = {key: value.subs(sost) for key, value in self.cl_lines.items()}  # calls Line.subs()
@@ -243,11 +244,7 @@ class Cubic:
     def find_admissible_projectivities(self, adm_perm=None):
         if adm_perm is None:
             adm_perm = self.find_admissible_permutations()
-        resulting_L_sets = []
-        for perm in adm_perm:
-            perm_L_set = get_permuted_L_set(perm)
-            if perm_L_set not in resulting_L_sets:  # avoid duplication
-                resulting_L_sets.append(perm_L_set)
+        resulting_L_sets = list(set([get_permuted_L_set(perm) for perm in adm_perm]))
         return self.find_all_proj_parallel(resulting_L_sets)
 
     # from the classification as E, F, G returns the actual lines in plucker coordinates
@@ -259,8 +256,7 @@ class Cubic:
         if os.name == "nt":
             mp.freeze_support()
         pool = mp.Pool(mp.cpu_count() - 1)
-        L_set_base = ('E1', 'G4', 'E2', 'G3', 'E3')
-        all_param = ((L_set_base, L_set) for L_set in all_L_sets)
+        all_param = ((self.L_set_base, L_set) for L_set in all_L_sets)
         result = pool.map(self.find_proj_parallel_wrapper, all_param)
         pool.close()
         return result
@@ -335,7 +331,7 @@ class Cubic:
         for M in [proj for proj in projectivities if proj not in simmetries]:
             prim_deco = self.find_decomposed_conditions_on_cubic(M)
             conditions += [ideale for ideale in prim_deco if self.is_ideal_valid(ideale)]
-        return conditions
+        return list(set(conditions))
 
     # check if ideal does not contain singular locus and  if it does not contain
     # polynomials which would cause this cubic to have more eckardt points

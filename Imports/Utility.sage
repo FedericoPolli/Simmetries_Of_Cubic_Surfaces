@@ -213,7 +213,7 @@ def find_projectivity(L_set1, L_set2):
 
     # for each point P_i in the base five points, we want P_i*M = P_i'
     system = matrix([points1[i] for i in range(5)]) * M
-    b = diagonal_matrix(vrs[-5:]) * matrix(points2[i] for i in range(5))
+    b = diagonal_matrix(vrs[-5:]) * matrix([points2[i] for i in range(5)])
     eqn = system - b
     sol = solve_linear_system_in_fraction_field(eqn.list(), vrs[0:20], [vrs[-1]])
 
