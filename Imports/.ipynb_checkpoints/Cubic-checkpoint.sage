@@ -59,8 +59,7 @@ class Cubic:
     def subs(self, sost):
         sing_subs = self.sing_locus.value().subs(sost)
         if sing_subs == 0:
-            raise ValueError('Cubic is singular')
-        
+            raise ValueError('Cubic is singular')    
         # multiply by denominator^2 to avoid missing singular factors
         sing_locus = (self.P(sing_subs * (sing_subs.denominator()) ^ 2)).factor().radical()
         eqn = remove_sing_factors(self.P(self.eqn.subs(sost).numerator()), sing_locus)
@@ -324,15 +323,33 @@ class Cubic:
     def find_decomposed_conditions_on_cubic(self, proj):
         ideal = self.find_conditions_on_cubic(proj)
         return ideal.saturation(self.P.gens()[5])[0].radical().primary_decomposition('gtz')
-
+    
+    
     # studies the projectivities which do not send this cubic to itself in general to try to find
     # values for the parameters for which some of these projectivities become simmetries
     def find_conditions_for_subfamilies(self, projectivities, simmetries=[]):
-        conditions = []
-        for M in [proj for proj in projectivities if proj not in simmetries]:
-            prim_deco = self.find_decomposed_conditions_on_cubic(M)
-            conditions += [ideale for ideale in prim_deco if self.is_ideal_valid(ideale)]
-        return list(set(conditions))
+        projs = [proj for proj in projectivities if proj not in simmetries]
+        return self.find_conditions_parallel(projs)
+    
+    
+    def find_conditions_parallel(self, projs):
+        if os.name == "nt":
+            mp.freeze_support()
+        pool = mp.Pool(mp.cpu_count() - 1)
+        all_param = ((proj,) for proj in projs)
+        result = [el for el in pool.map(self.find_conditions_wrapper, all_param) if el is not None]
+        pool.close()
+        return list(set([item for sublist in result for item in sublist])) 
+    
+
+    def find_conditions_wrapper(self, args):
+        return self.find_conditions(*args)
+    
+    
+    def find_conditions(self, proj):
+        prim_deco = self.find_decomposed_conditions_on_cubic(proj)
+        return [ideale for ideale in prim_deco if self.is_ideal_valid(ideale)]
+
 
     # check if ideal does not contain singular locus and  if it does not contain
     # polynomials which would cause this cubic to have more eckardt points
