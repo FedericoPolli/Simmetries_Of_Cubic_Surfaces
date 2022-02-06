@@ -51,7 +51,7 @@ class Cubic:
         cl_lines = {key: line.reduce(ideal) for key, line in self.cl_lines.items()}
         lines = list(cl_lines.values())
         tritangent_planes = [pl.reduce(ideal, cl_lines, sing_locus) for pl in self.tritangent_planes]
-        eck_points = [pl.reduce(ideal) for pl in self.eckardt_points]
+        eck_points = ["Not Implemented"]
         return Cubic(eqn, lines[0], sing_locus, lines, cl_lines, tritangent_planes, eck_points)
 
         # update with sostitution all members of the class
