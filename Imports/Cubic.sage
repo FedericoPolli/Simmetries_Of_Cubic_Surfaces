@@ -134,7 +134,10 @@ class Cubic:
     # TBD, it is used to intersect cubic with pencil of planes
     def _define_equations(self, line, k):
         plane = line.planes[0] * self.P.gens()[-2] + line.planes[1] * self.P.gens()[-1]
-        var = line.planes[k].variables()[0]
+        if k==0:
+            var = line.planes[0].variables()[0]
+        else:
+            var = [var for var in line.planes[k].variables() if var != line.planes[0].variables()[0]][0]
         param = [vr for vr in self.P.gens()[0:4] if vr != var]
         sol = solve_linear_system([plane], [var], param)
         sost = {param[i - 1]: sol[i] for i in range(1, 4)}
@@ -310,6 +313,20 @@ class Cubic:
 
     # --------------------------------------------------------------------------------------------------
 
+    def find_conditions_on_L_sets(self, possible_L_sets, filter_ideals = "", factors = None):
+        L_set_ideals = []
+        all_ideals = []
+        for L_set in possible_L_sets:
+            proj = self.find_projectivity(L_set_base, L_set)
+            ideals = self.find_decomposed_conditions_on_cubic(proj, factors)
+            if filter_ideals == "eck":
+                ideals = [ide for ide in ideals if self.is_ideal_valid(ide)]
+            else:
+                ideals = [ide for ide in ideals if not self.is_ideal_singular(ide)]
+            all_ideals += ideals
+            L_set_ideals.append([L_set, ideals])
+        return L_set_ideals, all_ideals
+    
     def find_conditions_on_cubic(self, proj):
         #change coordinates, obtain new cubic and find conditions on the parameters
         vrs = self.P.gens()[0:4]
@@ -320,9 +337,11 @@ class Cubic:
         no_sing_conds = [remove_sing_factors(el, self.sing_locus) for el in list(set(current_conds)) if el !=0]
         return self.P.ideal(no_sing_conds)
 
-    def find_decomposed_conditions_on_cubic(self, proj):
+    def find_decomposed_conditions_on_cubic(self, proj, factors = None):
+        if factors is None:
+            factors = self.P.gens()[5]
         ideal = self.find_conditions_on_cubic(proj)
-        return ideal.saturation(self.P.gens()[5])[0].radical().primary_decomposition('gtz')
+        return ideal.saturation(factors)[0].radical().primary_decomposition('gtz')
     
     
     # studies the projectivities which do not send this cubic to itself in general to try to find
