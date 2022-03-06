@@ -271,7 +271,7 @@ class Cubic:
         L1 = self.get_L_set_in_plucker(L_set1)
         L2 = self.get_L_set_in_plucker(L_set2)
         M = find_projectivity(L1, L2)
-        return M
+        return M, L_set2
 
     # Find simmetries -------------------------------------------------------------------------------------
 
@@ -296,7 +296,7 @@ class Cubic:
 
     # check if the list of coefficients of this cubic and the new one are proportional
     def find_simmetry(self, proj):
-        sost = change_coordinates(proj)
+        sost = change_coordinates(proj[0])
         new_cubic = self.eqn.subs(sost)
         if self.are_cubics_same(new_cubic):
             return proj
@@ -317,7 +317,7 @@ class Cubic:
         L_set_ideals = []
         all_ideals = []
         for L_set in possible_L_sets:
-            proj = self.find_projectivity(L_set_base, L_set)
+            proj = self.find_projectivity(L_set_base, L_set)[0] #only matrix is needed
             ideals = self.find_decomposed_conditions_on_cubic(proj, factors)
             if filter_ideals == "eck":
                 ideals = [ide for ide in ideals if self.is_ideal_valid(ide)]
@@ -347,7 +347,8 @@ class Cubic:
     # studies the projectivities which do not send this cubic to itself in general to try to find
     # values for the parameters for which some of these projectivities become simmetries
     def find_conditions_for_subfamilies(self, projectivities, simmetries=[]):
-        projs = [proj for proj in projectivities if proj not in simmetries]
+        simm_L_sets = [proj[1] for proj in simmetries]
+        projs = [proj for proj in projectivities if proj[1] not in simm_L_sets]
         return self.find_conditions_parallel(projs)
     
     
@@ -356,9 +357,9 @@ class Cubic:
             mp.freeze_support()
         pool = mp.Pool(mp.cpu_count() - 1)
         all_param = ((proj,) for proj in projs)
-        result = [el for el in pool.map(self.find_conditions_wrapper, all_param) if el is not None]
+        result = [el for el in pool.map(self.find_conditions_wrapper, all_param) if el[0] != []]
         pool.close()
-        return list(set([item for sublist in result for item in sublist])) 
+        return result
     
 
     def find_conditions_wrapper(self, args):
@@ -366,8 +367,8 @@ class Cubic:
     
     
     def find_conditions(self, proj):
-        prim_deco = self.find_decomposed_conditions_on_cubic(proj)
-        return [ideale for ideale in prim_deco if self.is_ideal_valid(ideale)]
+        prim_deco = self.find_decomposed_conditions_on_cubic(proj[0])
+        return ([ideale for ideale in prim_deco if self.is_ideal_valid(ideale)], proj[1])
 
 
     # check if ideal does not contain singular locus and  if it does not contain

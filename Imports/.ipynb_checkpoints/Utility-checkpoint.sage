@@ -213,7 +213,7 @@ def find_projectivity(L_set1, L_set2):
 
     # for each point P_i in the base five points, we want P_i*M = P_i'
     system = matrix([points1[i] for i in range(5)]) * M
-    b = diagonal_matrix(vrs[-5:]) * matrix(points2[i] for i in range(5))
+    b = diagonal_matrix(vrs[-5:]) * matrix([points2[i] for i in range(5)])
     eqn = system - b
     sol = solve_linear_system_in_fraction_field(eqn.list(), vrs[0:20], [vrs[-1]])
 
@@ -265,7 +265,7 @@ def solve_linear_system(eqns, variables, param):
     A = matrix([[eqn.coefficient(var) for var in variables] for eqn in eqns])
     b = matrix([sum([-eqn.coefficient(par) * par for par in param]) for eqn in eqns]).T
     sol = A.adjugate() * b
-    return [sol[i, 0] for i in range(len(variables))] + [det(A) * par for par in param]
+    return tuple([sol[i, 0] for i in range(len(variables))] + [det(A) * par for par in param])
 
 
 # removes singular factors from polynomial by checking each factor
@@ -317,17 +317,13 @@ def get_permuted_extended_L_set(perm):
     labels = from_perm_to_labels(perm)
     return tuple(labels[keys.index(label)] for label in ['E1', 'G4', 'E2', 'G3', 'E3', 'E5'])
 
-def find_conditions_on_cubic(cubic, proj):
-    #change coordinates, obtain new cubic and find conditions on the parameters
-    sost = change_coordinates(proj)
-    new_cubic = cubic.subs(sost)
-    vrs = cubic.P.gens()[0:4]
-    mon = (sum(vrs) ^ 3).monomials()
-    current_conds = matrix([[cubic.coefficient(mn) for mn in mon], [new_cubic.coefficient(mn) for mn in mon]]).minors(2)
-    no_sing_conds = [remove_sing_factors(el, cubic.sing_locus) for el in list(set(current_conds)) if el !=0]
-    return cubic.P.ideal(no_sing_conds)
-    
-def find_decomposed_conditions_on_cubic(cubic, proj):
-    ideal = find_conditions_on_cubic(cubic, proj)
-    prim_dec = ideal.saturation(cubic.P.ideal(c))[0].radical().primary_decomposition()
-    return [ide for ide in prim_dec if not cubic.is_ideal_singular(ide)]
+def get_perm_from_extended_L_set(extended_L_set):
+    keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
+            'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
+    extended_L_set_base = ['E1', 'G4', 'E2', 'G3', 'E3', 'E5']
+    with open('all_permutations.pickle', 'rb') as fil:
+        all_permutations_labels = pickle.load(fil)
+    indices = [keys.index(label) for label in extended_L_set]
+    for perm_label in all_permutations_labels:
+        if [perm_label.index(label) for label in extended_L_set_base] == indices:
+            return from_labels_to_perm(perm_label)
