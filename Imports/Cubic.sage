@@ -411,12 +411,12 @@ class Cubic:
         return self.eqn.coefficient(var)
     
     def find_projective_equivalence(self, cubic2, L_sets, param=None):
-    if param is None:
-        return self.find_projective_equivalence_without_parameters(cubic2, L_sets)
-    elif len(param) == 2:
-        return self.find_projective_equivalence_with_two_parameters(cubic2, L_sets, param)
-    else:
-        raise ValueError("Not yet supported")
+        if param is None:
+            return self.find_projective_equivalence_without_parameters(cubic2, L_sets)
+        elif len(param) == 2:
+            return self.find_projective_equivalence_with_two_parameters(cubic2, L_sets, param)
+        else:
+            raise ValueError("Not yet supported")
 
     def find_projective_equivalence_without_parameters(self, cubic2, L_sets):
         for L_set in L_sets:
@@ -446,3 +446,6 @@ class Cubic:
         sost = {l: poly.coefficient(m), m: -poly.coefficient(l)}
         #print(cubic1.are_cubics_same(param_cubic2.eqn.subs(change_coordinates(proj)).subs(sost)))
         return L_set_ideal[1], {param[i]:list(sost.values())[i] for i in range(len(param))}
+
+    def __eq__(self, other):
+        return self.are_cubics_same(other.eqn)
