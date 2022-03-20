@@ -409,3 +409,40 @@ class Cubic:
 
     def coefficient(self, var):
         return self.eqn.coefficient(var)
+    
+    def find_projective_equivalence(self, cubic2, L_sets, param=None):
+    if param is None:
+        return self.find_projective_equivalence_without_parameters(cubic2, L_sets)
+    elif len(param) == 2:
+        return self.find_projective_equivalence_with_two_parameters(cubic2, L_sets, param)
+    else:
+        raise ValueError("Not yet supported")
+
+    def find_projective_equivalence_without_parameters(self, cubic2, L_sets):
+        for L_set in L_sets:
+            proj = cubic2.find_projectivity(cubic2.L_set_base, L_set)[0]
+            eqn = cubic2.eqn.subs(change_coordinates(proj))
+            if self.are_cubics_same(eqn):
+                return L_set
+
+    def find_projective_equivalence_with_two_parameters(self, cubic2, L_sets, param):
+        vrs = self.P.gens()[0:4]
+        mon = (sum(vrs) ^ 3).monomials()
+        l, m = self.P.gens()[-2:]
+        param_sost = {param[0]:l, param[1]:m}
+        param_cubic2 = cubic2.subs(param_sost)
+        for L_set in L_sets:
+            proj = param_cubic2.find_projectivity(self.L_set_base, L_set)[0]
+            eqn = param_cubic2.eqn.subs(change_coordinates(proj))
+            
+            # find factor which represents cubic as we are not interested in the coefficients
+            eqn = [factor[0] for factor in eqn.factor() if any(var in vrs for var in factor[0].variables())][0]
+            current_conds = list(set(matrix([[self.coefficient(mn) for mn in mon], [eqn.coefficient(mn) for mn in mon]]).minors(2)))
+            prim_dec = self.P.ideal(current_conds).radical().primary_decomposition()
+            if [(ideal, L_set) for ideal in prim_dec if len(ideal.gens())==1] != []:
+                L_set_ideal = (prim_dec[0], L_set)
+                break
+        poly = L_set_ideal[0].gens()[0]
+        sost = {l: poly.coefficient(m), m: -poly.coefficient(l)}
+        #print(cubic1.are_cubics_same(param_cubic2.eqn.subs(change_coordinates(proj)).subs(sost)))
+        return L_set_ideal[1], {param[i]:list(sost.values())[i] for i in range(len(param))}
