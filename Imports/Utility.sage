@@ -321,7 +321,7 @@ def get_perm_from_extended_L_set(extended_L_set):
     keys = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'F12', 'F13', 'F14', 'F15', 'F16',
             'F23', 'F24', 'F25', 'F26', 'F34', 'F35', 'F36', 'F45', 'F46', 'F56']
     extended_L_set_base = ['E1', 'G4', 'E2', 'G3', 'E3', 'E5']
-    with open('all_permutations.pickle', 'rb') as fil:
+    with open('../Imports/all_permutations.pickle', 'rb') as fil:
         all_permutations_labels = pickle.load(fil)
     indices = [keys.index(label) for label in extended_L_set]
     for perm_label in all_permutations_labels:

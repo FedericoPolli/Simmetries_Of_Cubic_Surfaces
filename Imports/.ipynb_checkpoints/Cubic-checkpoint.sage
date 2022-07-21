@@ -225,7 +225,7 @@ class Cubic:
 
     # find the permutations which send the set of this cubic's Eckardt points to itself
     def find_admissible_permutations(self):
-        with open('all_permutations.pickle', 'rb') as fil:
+        with open('../Imports/all_permutations.pickle', 'rb') as fil:
             all_permutations = pickle.load(fil)
         adm_perm = []
         keys = list(self.cl_lines.keys())
