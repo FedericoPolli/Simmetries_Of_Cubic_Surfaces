@@ -317,7 +317,7 @@ class Cubic:
         L_set_ideals = []
         all_ideals = []
         for L_set in possible_L_sets:
-            proj = self.find_projectivity(L_set_base, L_set)[0] #only matrix is needed
+            proj = self.find_projectivity(self.L_set_base, L_set)[0] #only matrix is needed
             ideals = self.find_decomposed_conditions_on_cubic(proj, factors)
             if filter_ideals == "eck":
                 ideals = [ide for ide in ideals if self.is_ideal_valid(ide)]
