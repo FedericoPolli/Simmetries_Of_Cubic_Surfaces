@@ -327,3 +327,6 @@ def get_perm_from_extended_L_set(extended_L_set):
     for perm_label in all_permutations_labels:
         if [perm_label.index(label) for label in extended_L_set_base] == indices:
             return from_labels_to_perm(perm_label)
+            
+def find_linear_solution(poly, var):
+    return -(poly-poly.coefficient(var)*var)/poly.coefficient(var)
